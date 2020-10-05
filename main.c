@@ -47,7 +47,7 @@ struct word{
 int analyze_length;
 
 struct word MAKE_WORD(int code, char str[]);
-int main(){
+int main(int argc, char *argv[]){
     while(1){
         CLEAR_TOKEN();
         GETNBC();
@@ -108,7 +108,7 @@ int main(){
 
 void GETCHAR(){
     if(fp == NULL){
-        fp = fopen("$input", "r");
+        fp = fopen(argv[1], "r");
         if(fp == NULL){
             ERROR("can not find file code.");
             return;
