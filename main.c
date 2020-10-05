@@ -46,8 +46,11 @@ struct word{
 } analyze_result[100005];
 int analyze_length;
 
+char *path;
+
 struct word MAKE_WORD(int code, char str[]);
 int main(int argc, char *argv[]){
+    path = argv[1];
     while(1){
         CLEAR_TOKEN();
         GETNBC();
@@ -108,7 +111,7 @@ int main(int argc, char *argv[]){
 
 void GETCHAR(){
     if(fp == NULL){
-        fp = fopen(argv[1], "r");
+        fp = fopen(path, "r");
         if(fp == NULL){
             ERROR("can not find file code.");
             return;
