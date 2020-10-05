@@ -141,7 +141,9 @@ int ISDIGIT(){
 }
 
 void UNGETCH(){
-    fseek(fp, -1, SEEK_CUR);
+    if(CHAR != -1){
+        fseek(fp, -1, SEEK_CUR);
+    }
 }
 
 // 不是 0 保留字, 0 标识符
@@ -208,6 +210,7 @@ int main(int argc, char *argv[]){
                 CAT();
                 GETCHAR();
             } while(ISLETTER() || ISDIGIT());
+            UNGETCH();
             int flag = RESERVE();
             if(flag){
                 analyze_result[analyze_length++] = MAKE_WORD(flag, "-");
