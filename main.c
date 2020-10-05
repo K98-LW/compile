@@ -89,7 +89,7 @@ void ERROR(char error_msg[]){
         fclose(fp);
     }
     print_result();
-    exit(0);
+    // exit(0);
 }
 
 void GETCHAR(){
@@ -253,7 +253,8 @@ int main(int argc, char *argv[]){
         }
         else{
             analyze_result[analyze_length++] = MAKE_WORD(UNKNOWN, "-");
-            // ERROR("illegal input.");
+            ERROR("illegal input.");
+            return 0;
         }
     }
 }
