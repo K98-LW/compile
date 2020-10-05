@@ -75,7 +75,7 @@ void print_result(){
             printf("(%s)\n", analyze_result[i].value.str);
         }
         else if(analyze_result[i].code == INTSY){
-            printf("(%d)\n", analyze_result[i].value.num*10);
+            printf("(%d)\n", analyze_result[i].value.num);
         }
         else{
             printf("\n");
@@ -246,8 +246,10 @@ int main(int argc, char *argv[]){
             GETCHAR();
             if(CHAR == '=')
                 analyze_result[analyze_length++] = MAKE_WORD(ASSIGNSY, "-");
-            UNGETCH();
-            analyze_result[analyze_length++] = MAKE_WORD(COLONSY, "-");
+            else{
+                UNGETCH();
+                analyze_result[analyze_length++] = MAKE_WORD(COLONSY, "-");
+            }
         }
         else{
             analyze_result[analyze_length++] = MAKE_WORD(UNKNOWN, "-");
