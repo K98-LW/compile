@@ -200,7 +200,7 @@ int main(int argc, char *argv[]){
         GETNBC();
         if(CHAR == EOF){
             END();
-            return;
+            return 0;
         }
 
         if(ISLETTER()){
