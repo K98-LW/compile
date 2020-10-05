@@ -248,7 +248,7 @@ int main(int argc, char *argv[]){
         }
         else{
             analyze_result[analyze_length++] = MAKE_WORD(UNKNOWN, "-");
-            ERROR("illegal input.");
+            // ERROR("illegal input.");
         }
     }
 }
