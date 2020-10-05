@@ -48,65 +48,48 @@ int analyze_length;
 
 char *path;
 
-struct word MAKE_WORD(int code, char str[]);
-int main(int argc, char *argv[]){
-    path = argv[1];
-    while(1){
-        CLEAR_TOKEN();
-        GETNBC();
-        if(CHAR == EOF){
-            END();
-            return;
+void print_result(){
+    int i;
+    char *reserved_name[] = {
+        "Unknown",
+        "Begin",
+        "End",
+        "For",
+        "Do",
+        "If",
+        "Then",
+        "Else",
+        "Ident",
+        "Int",
+        "Colon",
+        "Plus",
+        "Star",
+        "Comma",
+        "LParenthesis",
+        "RParenthesis",
+        "Assign",
+    };
+    for(i=0; i<analyze_length; i++){
+        printf("%s", reserved_name[analyze_result[i].code]);
+        if(analyze_result[i].code == IDSY){
+            printf("(%s)\n", analyze_result[i].value.str);
         }
-
-        if(ISLETTER()){
-            do{
-                CAT();
-                GETCHAR();
-            } while(ISLETTER() || ISDIGIT());
-            int flag = RESERVE();
-            if(flag){
-                analyze_result[analyze_length++] = MAKE_WORD(flag, "-");
-            }
-            else{
-                analyze_result[analyze_length++] = MAKE_WORD(IDSY, TOKEN);
-            }
-        }
-        else if(ISDIGIT()){
-            do{
-                CAT();
-                GETCHAR();
-            } while(ISDIGIT());
-            UNGETCH();
-            analyze_result[analyze_length++] = MAKE_WORD(INTSY, TOKEN);
-        }
-        else if(CHAR == '+'){
-            analyze_result[analyze_length++] = MAKE_WORD(PLUSSY, "-");
-        }
-        else if(CHAR == '*'){
-            analyze_result[analyze_length++] = MAKE_WORD(STARSY, "-");
-        }
-        else if(CHAR == ','){
-            analyze_result[analyze_length++] = MAKE_WORD(COMSY, "-");
-        }
-        else if(CHAR == '('){
-            analyze_result[analyze_length++] = MAKE_WORD(LPARSY, "-");
-        }
-        else if(CHAR == ')'){
-            analyze_result[analyze_length++] = MAKE_WORD(RPARSY, "-");
-        }
-        else if(CHAR == ':'){
-            GETCHAR();
-            if(CHAR == '=')
-                analyze_result[analyze_length++] = MAKE_WORD(ASSIGNSY, "-");
-            UNGETCH();
-            analyze_result[analyze_length++] = MAKE_WORD(COLONSY, "-");
+        else if(analyze_result[i].code == INTSY){
+            printf("(%d)\n", analyze_result[i].value.num);
         }
         else{
-            analyze_result[analyze_length++] = MAKE_WORD(UNKNOWN, "-");
-            ERROR("illegal input.");
+            printf("\n");
         }
     }
+}
+
+void ERROR(char error_msg[]){
+    // puts(error_msg);
+    if(fp != NULL){
+        fclose(fp);
+    }
+    print_result();
+    exit(0);
 }
 
 void GETCHAR(){
@@ -203,15 +186,6 @@ struct word MAKE_WORD(int code, char str[]){
     return w;
 }
 
-void ERROR(char error_msg[]){
-    // puts(error_msg);
-    if(fp != NULL){
-        fclose(fp);
-    }
-    print_result();
-    exit(0);
-}
-
 void END(){
     if(fp != NULL){
         fclose(fp);
@@ -219,37 +193,62 @@ void END(){
     print_result();
 }
 
-void print_result(){
-    int i;
-    char *reserved_name[] = {
-        "Unknown",
-        "Begin",
-        "End",
-        "For",
-        "Do",
-        "If",
-        "Then",
-        "Else",
-        "Ident",
-        "Int",
-        "Colon",
-        "Plus",
-        "Star",
-        "Comma",
-        "LParenthesis",
-        "RParenthesis",
-        "Assign",
-    };
-    for(i=0; i<analyze_length; i++){
-        printf("%s", reserved_name[analyze_result[i].code]);
-        if(analyze_result[i].code == IDSY){
-            printf("(%s)\n", analyze_result[i].value.str);
+int main(int argc, char *argv[]){
+    path = argv[1];
+    while(1){
+        CLEAR_TOKEN();
+        GETNBC();
+        if(CHAR == EOF){
+            END();
+            return;
         }
-        else if(analyze_result[i].code == INTSY){
-            printf("(%d)\n", analyze_result[i].value.num);
+
+        if(ISLETTER()){
+            do{
+                CAT();
+                GETCHAR();
+            } while(ISLETTER() || ISDIGIT());
+            int flag = RESERVE();
+            if(flag){
+                analyze_result[analyze_length++] = MAKE_WORD(flag, "-");
+            }
+            else{
+                analyze_result[analyze_length++] = MAKE_WORD(IDSY, TOKEN);
+            }
+        }
+        else if(ISDIGIT()){
+            do{
+                CAT();
+                GETCHAR();
+            } while(ISDIGIT());
+            UNGETCH();
+            analyze_result[analyze_length++] = MAKE_WORD(INTSY, TOKEN);
+        }
+        else if(CHAR == '+'){
+            analyze_result[analyze_length++] = MAKE_WORD(PLUSSY, "-");
+        }
+        else if(CHAR == '*'){
+            analyze_result[analyze_length++] = MAKE_WORD(STARSY, "-");
+        }
+        else if(CHAR == ','){
+            analyze_result[analyze_length++] = MAKE_WORD(COMSY, "-");
+        }
+        else if(CHAR == '('){
+            analyze_result[analyze_length++] = MAKE_WORD(LPARSY, "-");
+        }
+        else if(CHAR == ')'){
+            analyze_result[analyze_length++] = MAKE_WORD(RPARSY, "-");
+        }
+        else if(CHAR == ':'){
+            GETCHAR();
+            if(CHAR == '=')
+                analyze_result[analyze_length++] = MAKE_WORD(ASSIGNSY, "-");
+            UNGETCH();
+            analyze_result[analyze_length++] = MAKE_WORD(COLONSY, "-");
         }
         else{
-            printf("\n");
+            analyze_result[analyze_length++] = MAKE_WORD(UNKNOWN, "-");
+            ERROR("illegal input.");
         }
     }
 }
