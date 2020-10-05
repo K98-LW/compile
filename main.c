@@ -75,7 +75,7 @@ void print_result(){
             printf("(%s)\n", analyze_result[i].value.str);
         }
         else if(analyze_result[i].code == INTSY){
-            printf("(%d)\n", analyze_result[i].value.num);
+            printf("(%d)\n", analyze_result[i].value.num*10);
         }
         else{
             printf("\n");
