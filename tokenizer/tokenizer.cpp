@@ -23,7 +23,7 @@ Tokenizer::NextToken() {
   std::cout << "end: " << isEOF() << "\n";
   printf("========================== 0\n");
   auto p = nextToken();
-  std::cout << p.first.value().GetValue() << "\n";
+  std::cout << p.first.value().GetValueString() << "\n";
   printf("========================== 1\n");
   std::cout << "end: " << isEOF() << "\n";
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
@@ -57,24 +57,24 @@ Tokenizer::analyzeString(std::stringstream &ss) {
   std::cout << s << "\n";
   std::cout << "is_begin:" << (s == "begin") << "\n";
   if(s == "begin")
-    return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,
-                                                "begin", pos, currentPos()),
+    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+                                                s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "end")
-    return std::make_pair(std::make_optional<Token>(TokenType::END,
-                                                "end", pos, currentPos()),
+    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+                                                s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "const")
-    return std::make_pair(std::make_optional<Token>(TokenType::CONST,
-                                                "const", pos, currentPos()),
+    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+                                                s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "var")
-    return std::make_pair(std::make_optional<Token>(TokenType::VAR,
-                                                "var", pos, currentPos()),
+    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+                                                s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "print")
-    return std::make_pair(std::make_optional<Token>(TokenType::PRINT,
-                                                "print", pos, currentPos()),
+    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+                                                s, pos, currentPos()),
                       std::optional<CompilationError>());
   else
     return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
