@@ -44,8 +44,6 @@ class Tokenizer final {
   std::pair<std::optional<Token>, std::optional<CompilationError>> NextToken();
   // 一次返回所有 token
   std::pair<std::vector<Token>, std::optional<CompilationError>> AllTokens();
-  // 分析关键词
-  std::pair<std::optional<Token>, std::optional<CompilationError>> analyzeString(std::stringstream &ss);
 
  private:
   // 检查 Token 的合法性
