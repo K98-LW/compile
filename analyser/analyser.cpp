@@ -18,7 +18,7 @@ std::optional<CompilationError> Analyser::analyseProgram() {
 
   // 'begin'
   auto bg = nextToken();
-  std::cout << "bg value: " + bg.value().GetValueString() << "\n";
+  // std::cout << "bg value: " + bg.value().GetValueString() << "\n";
   if (!bg.has_value() || bg.value().GetType() != TokenType::BEGIN)
     return std::make_optional<CompilationError>(_current_pos,
                                                 ErrorCode::ErrNoBegin);
@@ -29,7 +29,7 @@ std::optional<CompilationError> Analyser::analyseProgram() {
 
   // 'end'
   auto ed = nextToken();
-  std::cout << "ed value: " + ed.value().GetValueString() << "\n";
+  // std::cout << "ed value: " + ed.value().GetValueString() << "\n";
   if (!ed.has_value() || ed.value().GetType() != TokenType::END)
     return std::make_optional<CompilationError>(_current_pos,
                                                 ErrorCode::ErrNoEnd);
