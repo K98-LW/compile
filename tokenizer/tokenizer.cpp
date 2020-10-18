@@ -8,14 +8,18 @@ namespace miniplc0 {
 std::pair<std::optional<Token>, std::optional<CompilationError>>
 Tokenizer::NextToken() {
   if (!_initialized) readAll();
-  if (_rdr.bad())
+  if (_rdr.bad()){
+    printf("bad\n");
     return std::make_pair(
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrStreamError));
-  if (isEOF())
+  }
+  if (isEOF()){
+    printf("eof\n");
     return std::make_pair(
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
+  }
   std::cout << "end: " << isEOF() << "\n";
   printf("========================== 0\n");
   auto p = nextToken();
@@ -23,7 +27,10 @@ Tokenizer::NextToken() {
   std::cout << "end: " << isEOF() << "\n";
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
   auto err = checkToken(p.first.value());
-  if (err.has_value()) return std::make_pair(p.first, err.value());
+  if (err.has_value()) {
+    printf("err\n");
+    return std::make_pair(p.first, err.value());
+  }
   return std::make_pair(p.first, std::optional<CompilationError>());
 }
 
