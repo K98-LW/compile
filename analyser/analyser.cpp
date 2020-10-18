@@ -269,6 +269,7 @@ std::optional<CompilationError> Analyser::analyseExpression() {
   while (true) {
     // 预读
     auto next = nextToken();
+    printf("analyse ex next\n");
     if (!next.has_value()) return {};
     auto type = next.value().GetType();
     if (type != TokenType::PLUS_SIGN && type != TokenType::MINUS_SIGN) {
@@ -363,6 +364,7 @@ std::optional<CompilationError> Analyser::analyseItem() {
   while (true) {
     // 预读
     auto next = nextToken();
+    printf("analyse item next\n");
     if (!next.has_value()) return {};
     auto type = next.value().GetType();
     if (type != TokenType::MULTIPLICATION_SIGN && type != TokenType::DIVISION_SIGN) {
@@ -388,6 +390,7 @@ std::optional<CompilationError> Analyser::analyseItem() {
 std::optional<CompilationError> Analyser::analyseFactor() {
   // [<符号>]
   auto next = nextToken();
+  printf("factor next\n");
   auto prefix = 1;
   if (!next.has_value())
     return std::make_optional<CompilationError>(
@@ -402,6 +405,7 @@ std::optional<CompilationError> Analyser::analyseFactor() {
 
   // 预读
   next = nextToken();
+  printf("factor next\n");
   if (!next.has_value())
     return std::make_optional<CompilationError>(
         _current_pos, ErrorCode::ErrIncompleteExpression);
@@ -433,6 +437,7 @@ std::optional<CompilationError> Analyser::analyseFactor() {
         err = Analyser::analyseExpression();
         if(err.has_value()) return err;
         next = nextToken();
+        printf("factor next\n");
         if(!next.has_value() || next.value().GetType() != TokenType::RIGHT_BRACKET)
           return std::make_optional<CompilationError>(
               _current_pos, ErrorCode::ErrIncompleteExpression);
