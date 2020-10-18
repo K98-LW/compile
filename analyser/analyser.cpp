@@ -451,8 +451,7 @@ std::optional<Token> Analyser::nextToken() {
   // 考虑到 _tokens[0..._offset-1] 已经被分析过了
   // 所以我们选择 _tokens[0..._offset-1] 的 EndPos 作为当前位置
   _current_pos = _tokens[_offset].GetEndPos();
-  if((_tokens[_offset+1]).has_value())
-    std::cout << "nextToken: " << _tokens[_offset+1].GetValueString() << "\n";
+  std::cout << "nextToken: " << _tokens[_offset+1].GetValueString() << "\n";
   return _tokens[_offset++];
 }
 
