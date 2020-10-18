@@ -286,7 +286,7 @@ Tokenizer::nextToken() {
       }
       case EQUAL_SIGN_STATE: {
         unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON,
+        return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_SIGN,
                                                         '=', pos, currentPos()),
                               std::optional<CompilationError>());
       }
