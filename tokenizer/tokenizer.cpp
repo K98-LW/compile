@@ -191,6 +191,7 @@ Tokenizer::nextToken() {
 
         // 当前状态是无符号整数
       case UNSIGNED_INTEGER_STATE: {
+        printf("in unsigned state\n");
         // 请填空：
         //solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串为整数
@@ -285,6 +286,12 @@ Tokenizer::nextToken() {
         unreadLast();
         return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON,
                                                         ';', pos, currentPos()),
+                              std::optional<CompilationError>());
+      }
+      case EQUAL_SIGN_STATE: {
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON,
+                                                        '=', pos, currentPos()),
                               std::optional<CompilationError>());
       }
 
