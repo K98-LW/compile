@@ -19,7 +19,6 @@ Tokenizer::NextToken() {
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
   }
   auto p = nextToken();
-  std::cout << p.first.value().GetValueString() << "\n";
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
   auto err = checkToken(p.first.value());
   if (err.has_value()) {
@@ -47,25 +46,24 @@ std::pair<std::optional<Token>, std::optional<CompilationError>>
 Tokenizer::analyzeString(std::stringstream &ss) {
   std::string s = ss.str();
   auto pos = previousPos();
-  std::cout << "string: " << s << "\n";
   if(s == "begin")
-    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+    return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,
                                                 s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "end")
-    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+    return std::make_pair(std::make_optional<Token>(TokenType::END,
                                                 s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "const")
-    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+    return std::make_pair(std::make_optional<Token>(TokenType::CONST,
                                                 s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "var")
-    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+    return std::make_pair(std::make_optional<Token>(TokenType::VAR,
                                                 s, pos, currentPos()),
                       std::optional<CompilationError>());
   else if(s == "print")
-    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+    return std::make_pair(std::make_optional<Token>(TokenType::PRINT,
                                                 s, pos, currentPos()),
                       std::optional<CompilationError>());
   else
