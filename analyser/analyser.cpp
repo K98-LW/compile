@@ -135,14 +135,13 @@ std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
     addVariable(next.value());
 
     // 变量可能没有初始化，仍然需要一次预读
+    printf("========== var next\n");
     next = nextToken();
     if (!next.has_value())
       return std::make_optional<CompilationError>(
           _current_pos, ErrorCode::ErrNoSemicolon);
 
     // '='
-    next = nextToken();
-    printf("========== var next\n");
     if(next.value().GetType() == TokenType::EQUAL_SIGN){
       // '<表达式>'
       auto err = analyseExpression();
