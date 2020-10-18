@@ -9,27 +9,21 @@ std::pair<std::optional<Token>, std::optional<CompilationError>>
 Tokenizer::NextToken() {
   if (!_initialized) readAll();
   if (_rdr.bad()){
-    printf("bad\n");
     return std::make_pair(
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrStreamError));
   }
   if (isEOF()){
-    printf("eof\n");
     return std::make_pair(
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
   }
-  std::cout << "end: " << isEOF() << "\n";
   printf("========================== 0\n");
   auto p = nextToken();
   std::cout << p.first.value().GetValueString() << "\n";
-  printf("========================== 1\n");
-  std::cout << "end: " << isEOF() << "\n";
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
   auto err = checkToken(p.first.value());
   if (err.has_value()) {
-    printf("err\n");
     return std::make_pair(p.first, err.value());
   }
   return std::make_pair(p.first, std::optional<CompilationError>());
@@ -54,8 +48,7 @@ std::pair<std::optional<Token>, std::optional<CompilationError>>
 Tokenizer::analyzeString(std::stringstream &ss) {
   std::string s = ss.str();
   auto pos = previousPos();
-  std::cout << s << "\n";
-  std::cout << "is_begin:" << (s == "begin") << "\n";
+  std::cout << "string: " << s << "\n";
   if(s == "begin")
     return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
                                                 s, pos, currentPos()),
