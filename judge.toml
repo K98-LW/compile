@@ -1,7 +1,5 @@
-[jobs.pascal_lex]
-
-image = { source = "dockerfile", path = ".", tag = "pascal-lex-example" }
-
+[jobs.miniplc0]
+image = {source = "dockerfile", path = ".", tag = "miniplc0-cpp"}
 run = [
-  "./program $input",
+  "./miniplc0 -l $input -o $output",
 ]
