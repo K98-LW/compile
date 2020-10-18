@@ -18,7 +18,6 @@ Tokenizer::NextToken() {
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
   }
-  printf("========================== 0\n");
   auto p = nextToken();
   std::cout << p.first.value().GetValueString() << "\n";
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
@@ -191,7 +190,6 @@ Tokenizer::nextToken() {
 
         // 当前状态是无符号整数
       case UNSIGNED_INTEGER_STATE: {
-        printf("in unsigned state\n");
         // 请填空：
         //solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串为整数
