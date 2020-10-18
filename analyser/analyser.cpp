@@ -305,7 +305,7 @@ std::optional<CompilationError> Analyser::analyseAssignmentStatement() {
   if(!Analyser::isDeclared(next.value().GetValueString()))
     return std::make_optional<CompilationError>(_current_pos,
                                                 ErrorCode::ErrNotDeclared);
-  if(!Analyser::isConstant(next.value().GetValueString()))
+  if(Analyser::isConstant(next.value().GetValueString()))
     return std::make_optional<CompilationError>(_current_pos,
                                                 ErrorCode::ErrAssignToConstant);
   int32_t x = Analyser::getIndex(next.value().GetValueString());
