@@ -29,7 +29,7 @@ std::optional<CompilationError> Analyser::analyseProgram() {
 
   // 'end'
   auto ed = nextToken();
-  std::cout << "ed value: " + bg.value().GetValueString() << "\n";
+  std::cout << "ed value: " + ed.value().GetValueString() << "\n";
   if (!ed.has_value() || ed.value().GetType() != TokenType::END)
     return std::make_optional<CompilationError>(_current_pos,
                                                 ErrorCode::ErrNoEnd);
@@ -117,7 +117,7 @@ std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
     // 'var'
     auto next = nextToken();
       if (!next.has_value()) return {};
-      // 如果是 const 那么说明应该推导 <常量声明> 否则直接返回
+      
       if (next.value().GetType() != TokenType::VAR) {
         unreadToken();
         return {};
@@ -448,6 +448,7 @@ std::optional<Token> Analyser::nextToken() {
   // 考虑到 _tokens[0..._offset-1] 已经被分析过了
   // 所以我们选择 _tokens[0..._offset-1] 的 EndPos 作为当前位置
   _current_pos = _tokens[_offset].GetEndPos();
+  std::cout << "nextToken: " << _tokens[_offset+1].GetValueString() << "\n";
   return _tokens[_offset++];
 }
 
