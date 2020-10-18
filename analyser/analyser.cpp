@@ -142,6 +142,7 @@ std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
 
     // '='
     next = nextToken();
+    printf("========== var next\n");
     if(next.value().GetType() == TokenType::EQUAL_SIGN){
       // '<表达式>'
       auto err = analyseExpression();
@@ -152,6 +153,7 @@ std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
 
     // ';'
     next = nextToken();
+    printf("========== var next\n");
     if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
       return std::make_optional<CompilationError>(_current_pos,
                                                   ErrorCode::ErrNoSemicolon);
