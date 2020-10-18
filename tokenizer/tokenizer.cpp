@@ -16,9 +16,11 @@ Tokenizer::NextToken() {
     return std::make_pair(
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
+  std::cout << "end: " << isEOF() << "\n";
   printf("========================== 0\n");
   auto p = nextToken();
   printf("========================== 1\n");
+  std::cout << "end: " << isEOF() << "\n";
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
   auto err = checkToken(p.first.value());
   if (err.has_value()) return std::make_pair(p.first, err.value());
