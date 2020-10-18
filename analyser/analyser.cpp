@@ -38,12 +38,20 @@ std::optional<CompilationError> Analyser::analyseProgram() {
 // 需要补全
 std::optional<CompilationError> Analyser::analyseMain() {
   // 完全可以参照 <程序> 编写
+  // solution code
 
   // <常量声明>
+  auto constantErr = Analyser::analyseConstantDeclaration();
+  if(constantErr.has_value()) return constantErr;
 
   // <变量声明>
+  auto variableErr = Analyser::analyseVariableDeclaration();
+  if(variableErr.has_value()) return variableErr;
 
   // <语句序列>
+  auto statementErr = Analyser::analyseStatementSequence();
+  if(statementErr.has_value()) return statementErr;
+
   return {};
 }
 
@@ -100,20 +108,50 @@ std::optional<CompilationError> Analyser::analyseConstantDeclaration() {
 // 需要补全
 std::optional<CompilationError> Analyser::analyseVariableDeclaration() {
   // 变量声明语句可能有一个或者多个
+  // solution code
 
-  // 预读？
+  while(true) {
+    // 预读？
+    // 'var'
+    auto next = nextToken();
+      if (!next.has_value()) return {};
+      // 如果是 const 那么说明应该推导 <常量声明> 否则直接返回
+      if (next.value().GetType() != TokenType::VAR) {
+        unreadToken();
+        return {};
+      }
 
-  // 'var'
+    // <标识符>
+    next = nextToken();
+    if (!next.has_value() || next.value().GetType() != TokenType::IDENTIFIER)
+      return std::make_optional<CompilationError>(_current_pos,
+                                                  ErrorCode::ErrNeedIdentifier);
+    if (isDeclared(next.value().GetValueString()))
+      return std::make_optional<CompilationError>(
+          _current_pos, ErrorCode::ErrDuplicateDeclaration);
+    addVariable(next.value());
 
-  // <标识符>
+    // 变量可能没有初始化，仍然需要一次预读
+    next = nextToken();
+    if (!next.has_value())
+      return std::make_optional<CompilationError>(
+          _current_pos, ErrorCode::ErrNoSemicolon);
 
-  // 变量可能没有初始化，仍然需要一次预读
+    // '='
+    next = nextToken();
+    if(next.value().GetType() == TokenType::EQUAL_SIGN){
+      // '<表达式>'
+      auto err = analyseExpression();
+      if (err.has_value()) return err;
+    }
+    else 
+      unreadToken();
 
-  // '='
-
-  // '<表达式>'
-
-  // ';'
+    // ';'
+    if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
+      return std::make_optional<CompilationError>(_current_pos,
+                                                  ErrorCode::ErrNoSemicolon);
+  }
   return {};
 }
 
@@ -138,10 +176,40 @@ std::optional<CompilationError> Analyser::analyseStatementSequence() {
     switch (next.value().GetType()) {
         // 这里需要你针对不同的预读结果来调用不同的子程序
         // 注意我们没有针对空语句单独声明一个函数，因此可以直接在这里返回
+        // solution code
+        case TokenType::IDENTIFIER:
+          err = Analyser::analyseAssignmentStatement();
+          if(err.has_value()) return err;
+          break;
+        case TokenType::PRINT:
+          err = Analyser::analyseOutputStatement();
+          if(err.has_value()) return err;
+          break;
+        case TokenType::SEMICOLON:
+          nextToken();
+          break;
       default:
         break;
     }
   }
+  return {};
+}
+
+// <无符号整数>，上限为max_value
+std::optional<CompilationError> Analyser::analyseUnsignedInt(long long &out, unsigned int max_value) {
+  auto next = nextToken();
+  if (!next.has_value() || next.value().GetType() != TokenType::UNSIGNED_INTEGER) 
+    return std::make_optional<CompilationError>(_current_pos,
+                                                  ErrorCode::ErrIncompleteExpression);
+  long long val = 0;
+  const char *str = next.value().GetValueString().c_str();
+  for(int i=0; str!=NULL && str[i]!=0; i++){
+    val = val * 10 + (str[i] - '0');
+    if(val > max_value)
+      return std::make_optional<CompilationError>(_current_pos,
+                                                  ErrorCode::ErrIntegerOverflow);
+  }
+  out = val;
   return {};
 }
 
@@ -154,6 +222,34 @@ std::optional<CompilationError> Analyser::analyseConstantExpression(
   // 注意以下均为常表达式
   // +1 -1 1
   // 同时要注意是否溢出
+
+  // solution code
+  auto next = nextToken();
+  if (!next.has_value()) return {};
+
+  auto type = next.value().GetType();
+  int factor = 1;
+  if (type != TokenType::PLUS_SIGN && type != TokenType::MINUS_SIGN && type != TokenType::UNSIGNED_INTEGER) {
+    unreadToken();
+    return {};
+  }
+  else if(type == TokenType::PLUS_SIGN)
+    factor = 1;
+  else if(type == TokenType::MINUS_SIGN)
+    factor = -1;
+  else
+    unreadToken();
+
+  long long val = 0;
+  if(factor == 1){
+    auto err = Analyser::analyseUnsignedInt(val, INT32_MAX);
+    if(err.has_value()) return err;
+  }
+  else{
+    auto err = Analyser::analyseUnsignedInt(val, INT32_MIN * (unsigned int)-1);
+    if(err.has_value()) return err;
+  }
+  out = val * factor;
   return {};
 }
 
@@ -194,6 +290,24 @@ std::optional<CompilationError> Analyser::analyseAssignmentStatement() {
   // 标识符声明过吗？
   // 标识符是常量吗？
   // 需要生成指令吗？
+  // solution code
+  auto next = nextToken();
+  if (!next.has_value()) return {};
+
+  if(!Analyser::isDeclared(next.value().GetValueString()))
+    return std::make_optional<CompilationError>(_current_pos,
+                                                ErrorCode::ErrNotDeclared);
+  if(!Analyser::isConstant(next.value().GetValueString()))
+    return std::make_optional<CompilationError>(_current_pos,
+                                                ErrorCode::ErrAssignToConstant);
+  int32_t x = Analyser::getIndex(next.value().GetValueString());
+  next = nextToken();
+  if(!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN)
+    return std::make_optional<CompilationError>(_current_pos,
+                                                ErrorCode::ErrInvalidAssignment);
+  auto err = analyseExpression();
+  if (err.has_value()) return err;
+  _instructions.emplace_back(Operation::STO, x);
   return {};
 }
 
@@ -233,6 +347,33 @@ std::optional<CompilationError> Analyser::analyseOutputStatement() {
 // 需要补全
 std::optional<CompilationError> Analyser::analyseItem() {
   // 可以参考 <表达式> 实现
+
+  // solution code
+  // <因子>
+  auto err = analyseFactor();
+  if (err.has_value()) return err;
+
+  // {<乘法型运算符><因子>}
+  while (true) {
+    // 预读
+    auto next = nextToken();
+    if (!next.has_value()) return {};
+    auto type = next.value().GetType();
+    if (type != TokenType::MULTIPLICATION_SIGN && type != TokenType::DIVISION_SIGN) {
+      unreadToken();
+      return {};
+    }
+
+    // <因子>
+    err = analyseFactor();
+    if (err.has_value()) return err;
+
+    // 根据结果生成指令
+    if (type == TokenType::MULTIPLICATION_SIGN)
+      _instructions.emplace_back(Operation::MUL, 0);
+    else if (type == TokenType::DIVISION_SIGN)
+      _instructions.emplace_back(Operation::DIV, 0);
+  }
   return {};
 }
 
@@ -258,9 +399,38 @@ std::optional<CompilationError> Analyser::analyseFactor() {
   if (!next.has_value())
     return std::make_optional<CompilationError>(
         _current_pos, ErrorCode::ErrIncompleteExpression);
+  std::optional<CompilationError> err;
+  int x = 0;
+  long long val = 0;
   switch (next.value().GetType()) {
       // 这里和 <语句序列> 类似，需要根据预读结果调用不同的子程序
       // 但是要注意 default 返回的是一个编译错误
+
+      // solution code
+      // <标识符>
+      case TokenType::IDENTIFIER:
+        if(!Analyser::isDeclared(next.value().GetValueString()))
+          return std::make_optional<CompilationError>(
+            _current_pos, ErrorCode::ErrNotDeclared);
+        x = Analyser::getIndex(next.value().GetValueString());
+        _instructions.emplace_back(Operation::LOD, x);
+        break;
+      // <无符号整数>
+      case TokenType::UNSIGNED_INTEGER:
+        unreadToken();
+        err = Analyser::analyseUnsignedInt(val, INT32_MAX);
+        if(err.has_value()) return err;
+        _instructions.emplace_back(Operation::LIT, (int32_t)val);
+        break;
+      // '('<表达式>')'
+      case TokenType::LEFT_BRACKET:
+        err = Analyser::analyseExpression();
+        if(err.has_value()) return err;
+        next = nextToken();
+        if(!next.has_value() || next.value().GetType() != TokenType::RIGHT_BRACKET)
+          return std::make_optional<CompilationError>(
+              _current_pos, ErrorCode::ErrIncompleteExpression);
+        break;
     default:
       return std::make_optional<CompilationError>(
           _current_pos, ErrorCode::ErrIncompleteExpression);

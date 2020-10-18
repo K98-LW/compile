@@ -16,7 +16,9 @@ Tokenizer::NextToken() {
     return std::make_pair(
         std::optional<Token>(),
         std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
+  printf("========================== 0\n");
   auto p = nextToken();
+  printf("========================== 1\n");
   if (p.second.has_value()) return std::make_pair(p.first, p.second);
   auto err = checkToken(p.first.value());
   if (err.has_value()) return std::make_pair(p.first, err.value());
@@ -36,6 +38,38 @@ Tokenizer::AllTokens() {
     }
     result.emplace_back(p.first.value());
   }
+}
+
+std::pair<std::optional<Token>, std::optional<CompilationError>>
+Tokenizer::analyzeString(std::stringstream &ss) {
+  std::string s = ss.str();
+  auto pos = previousPos();
+  std::cout << s << "\n";
+  std::cout << "is_begin:" << (s == "begin") << "\n";
+  if(s == "begin")
+    return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,
+                                                "begin", pos, currentPos()),
+                      std::optional<CompilationError>());
+  else if(s == "end")
+    return std::make_pair(std::make_optional<Token>(TokenType::END,
+                                                "end", pos, currentPos()),
+                      std::optional<CompilationError>());
+  else if(s == "const")
+    return std::make_pair(std::make_optional<Token>(TokenType::CONST,
+                                                "const", pos, currentPos()),
+                      std::optional<CompilationError>());
+  else if(s == "var")
+    return std::make_pair(std::make_optional<Token>(TokenType::VAR,
+                                                "var", pos, currentPos()),
+                      std::optional<CompilationError>());
+  else if(s == "print")
+    return std::make_pair(std::make_optional<Token>(TokenType::PRINT,
+                                                "print", pos, currentPos()),
+                      std::optional<CompilationError>());
+  else
+    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
+                                                s, pos, currentPos()),
+                      std::optional<CompilationError>());
 }
 
 // 注意：这里的返回值中 Token 和 CompilationError 只能返回一个，不能同时返回。
@@ -95,16 +129,38 @@ Tokenizer::nextToken() {
               break;
             case '-':
               // 请填空：切换到减号的状态
+              // solution code
+              current_state = DFAState::MINUS_SIGN_STATE;
+              break;
             case '+':
               // 请填空：切换到加号的状态
+              // solution code
+              current_state = DFAState::PLUS_SIGN_STATE;
+              break;
             case '*':
               // 请填空：切换状态
+              // solution code
+              current_state = DFAState::MULTIPLICATION_SIGN_STATE;
+              break;
             case '/':
               // 请填空：切换状态
+              // solution code
+              current_state = DFAState::DIVISION_SIGN_STATE;
+              break;
 
             ///// 请填空：
             ///// 对于其他的可接受字符
             ///// 切换到对应的状态
+            // solution code
+            case '(':
+              current_state = DFAState::LEFTBRACKET_STATE;
+              break;
+            case ')':
+              current_state = DFAState::RIGHTBRACKET_STATE;
+              break;
+            case ';':
+              current_state = DFAState::SEMICOLON_STATE;
+              break;
 
             // 不接受的字符导致的不合法的状态
             default:
@@ -133,26 +189,52 @@ Tokenizer::nextToken() {
         // 当前状态是无符号整数
       case UNSIGNED_INTEGER_STATE: {
         // 请填空：
+        //solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串为整数
+        if (!current_char.has_value())
+          return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,
+                                                        ss.str(), pos, currentPos()),
+                              std::optional<CompilationError>());
         //     解析成功则返回无符号整数类型的token，否则返回编译错误
+        auto ch = current_char.value();
         // 如果读到的字符是数字，则存储读到的字符
+        if (miniplc0::isdigit(ch))
+          ss << ch;
         // 如果读到的字符不是数字，则回退读到的字符，并解析已经读到的字符串为整数
+        else {
+          unreadLast();
+          return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,
+                                                        ss.str(), pos, currentPos()),
+                              std::optional<CompilationError>());
+        }
         //     解析成功则返回无符号整数类型的token，否则返回编译错误
         break;
       }
       case IDENTIFIER_STATE: {
         // 请填空：
+        // solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串
         //     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
+        if (!current_char.has_value())
+          return Tokenizer::analyzeString(ss);
         // 如果读到的是字符或字母，则存储读到的字符
         // 如果读到的字符不是上述情况之一，则回退读到的字符，并解析已经读到的字符串
         //     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
+        auto ch = current_char.value();
+        if(miniplc0::isdigit(ch) || miniplc0::isalpha(ch))
+          ss << ch;
+        else {
+          unreadLast();
+          return Tokenizer::analyzeString(ss);
+        }
         break;
       }
 
         // 如果当前状态是加号
       case PLUS_SIGN_STATE: {
         // 请思考这里为什么要回退，在其他地方会不会需要
+        // answer: 本来加号就已经终止了，这个符号就不该读入
+
         unreadLast();  // Yes, we unread last char even if it's an EOF.
         return std::make_pair(std::make_optional<Token>(TokenType::PLUS_SIGN,
                                                         '+', pos, currentPos()),
@@ -161,11 +243,47 @@ Tokenizer::nextToken() {
         // 当前状态为减号的状态
       case MINUS_SIGN_STATE: {
         // 请填空：回退，并返回减号token
+        // solution code
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::MINUS_SIGN,
+                                                        '-', pos, currentPos()),
+                              std::optional<CompilationError>());
       }
 
         // 请填空：
         // 对于其他的合法状态，进行合适的操作
         // 比如进行解析、返回token、返回编译错误
+      //solution code
+      case MULTIPLICATION_SIGN_STATE: {
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::MULTIPLICATION_SIGN,
+                                                        '*', pos, currentPos()),
+                              std::optional<CompilationError>());
+      }
+      case DIVISION_SIGN_STATE: {
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::DIVISION_SIGN,
+                                                        '/', pos, currentPos()),
+                              std::optional<CompilationError>());
+      }
+      case LEFTBRACKET_STATE: {
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::LEFT_BRACKET,
+                                                        '(', pos, currentPos()),
+                              std::optional<CompilationError>());
+      }
+      case RIGHTBRACKET_STATE: {
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::RIGHT_BRACKET,
+                                                        ')', pos, currentPos()),
+                              std::optional<CompilationError>());
+      }
+      case SEMICOLON_STATE: {
+        unreadLast();
+        return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON,
+                                                        ';', pos, currentPos()),
+                              std::optional<CompilationError>());
+      }
 
         // 预料之外的状态，如果执行到了这里，说明程序异常
       default:
@@ -177,6 +295,7 @@ Tokenizer::nextToken() {
   return std::make_pair(std::optional<Token>(),
                         std::optional<CompilationError>());
 }
+
 
 std::optional<CompilationError> Tokenizer::checkToken(const Token& t) {
   switch (t.GetType()) {

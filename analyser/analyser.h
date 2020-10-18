@@ -52,6 +52,8 @@ class Analyser final {
   std::optional<CompilationError> analyseVariableDeclaration();
   // <语句序列>
   std::optional<CompilationError> analyseStatementSequence();
+  // <无符号整数>
+  std::optional<CompilationError> analyseUnsignedInt(long long &out, unsigned int max_value);
   // <常表达式>
   // 这里的 out 是常表达式的值
   std::optional<CompilationError> analyseConstantExpression(int32_t &out);
