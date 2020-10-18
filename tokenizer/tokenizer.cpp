@@ -42,6 +42,7 @@ std::pair<std::optional<Token>, std::optional<CompilationError>>
 Tokenizer::analyzeString(std::stringstream &ss) {
   std::string s = ss.str();
   auto pos = previousPos();
+  std::cout << s;
   if(s == "begin")
     return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,
                                                 "begin", pos, currentPos()),
