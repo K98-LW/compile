@@ -22,9 +22,9 @@ std::optional<CompilationError> Analyser::analyseProgram() {
     return std::make_optional<CompilationError>(_current_pos,
                                                 ErrorCode::ErrNoBegin);
 
-  // // <主过程>
-  // auto err = analyseMain();
-  // if (err.has_value()) return err;
+  // <主过程>
+  auto err = analyseMain();
+  if (err.has_value()) return err;
 
   // 'end'
   auto ed = nextToken();
