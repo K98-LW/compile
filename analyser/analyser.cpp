@@ -96,6 +96,7 @@ std::optional<CompilationError> Analyser::analyseConstantDeclaration() {
 
     // ';'
     next = nextToken();
+    printf("const next\n");
     if (!next.has_value() || next.value().GetType() != TokenType::SEMICOLON)
       return std::make_optional<CompilationError>(_current_pos,
                                                   ErrorCode::ErrNoSemicolon);
@@ -200,6 +201,7 @@ std::optional<CompilationError> Analyser::analyseStatementSequence() {
 // <无符号整数>，上限为max_value
 std::optional<CompilationError> Analyser::analyseUnsignedInt(long long &out, unsigned int max_value) {
   auto next = nextToken();
+  printf("unsigned next\n");
   if (!next.has_value() || next.value().GetType() != TokenType::UNSIGNED_INTEGER) 
     return std::make_optional<CompilationError>(_current_pos,
                                                   ErrorCode::ErrIncompleteExpression);
@@ -227,6 +229,7 @@ std::optional<CompilationError> Analyser::analyseConstantExpression(
 
   // solution code
   auto next = nextToken();
+  printf("analyse ce next\n");
   if (!next.has_value()) return {};
 
   auto type = next.value().GetType();
@@ -448,7 +451,8 @@ std::optional<Token> Analyser::nextToken() {
   // 考虑到 _tokens[0..._offset-1] 已经被分析过了
   // 所以我们选择 _tokens[0..._offset-1] 的 EndPos 作为当前位置
   _current_pos = _tokens[_offset].GetEndPos();
-  std::cout << "nextToken: " << _tokens[_offset+1].GetValueString() << "\n";
+  if(_tokens[_offset+1].has_value())
+    std::cout << "nextToken: " << _tokens[_offset+1].GetValueString() << "\n";
   return _tokens[_offset++];
 }
 
