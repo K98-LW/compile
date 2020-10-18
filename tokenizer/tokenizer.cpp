@@ -193,7 +193,7 @@ Tokenizer::nextToken() {
         // 请填空：
         //solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串为整数
-        if (!current_char.has_value())
+        if (isEOF())
           return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,
                                                         ss.str(), pos, currentPos()),
                               std::optional<CompilationError>());
@@ -217,9 +217,7 @@ Tokenizer::nextToken() {
         // solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串
         //     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
-        std::cout << "has_value? " << current_char.has_value() << "\n";
-        std::cout << "e? " << isEOF() << "\n";
-        if (!current_char.has_value())
+        if (isEOF())
           return Tokenizer::analyzeString(ss);
         // 如果读到的是字符或字母，则存储读到的字符
         // 如果读到的字符不是上述情况之一，则回退读到的字符，并解析已经读到的字符串
