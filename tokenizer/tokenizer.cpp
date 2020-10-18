@@ -217,6 +217,8 @@ Tokenizer::nextToken() {
         // solution code
         // 如果当前已经读到了文件尾，则解析已经读到的字符串
         //     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
+        std::cout << "has_value? " << current_char.has_value() << "\n";
+        std::cout << "e? " << isEOF() << "\n";
         if (!current_char.has_value())
           return Tokenizer::analyzeString(ss);
         // 如果读到的是字符或字母，则存储读到的字符
