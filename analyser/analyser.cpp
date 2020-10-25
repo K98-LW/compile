@@ -350,11 +350,7 @@ std::optional<CompilationError> Analyser::analyseAssignmentStatement()
 	{
 		return {CompilationError(_current_pos, ErrorCode::ErrAssignToConstant)};
 	}
-  
-	auto index=getIndex(name);
-	_instructions.emplace_back(Operation::STO, index);
-// 存储这个标识符
-	makeInitialized(name);
+
 	next=nextToken();
 
 	if(!next.has_value() || next.value().GetType() != TokenType::EQUAL_SIGN)
@@ -366,6 +362,8 @@ std::optional<CompilationError> Analyser::analyseAssignmentStatement()
 	{
 		return err;
 	}
+	auto index=getIndex(name);
+	_instructions.emplace_back(Operation::STO, index);
 	return {};
 }
 
