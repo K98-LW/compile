@@ -277,11 +277,7 @@ std::optional<CompilationError> Analyser::analyseConstantExpression(int32_t &out
 	{
 		return std::make_optional<CompilationError>(_current_pos,ErrorCode::ErrNeedIdentifier);
 	}
-<<<<<<< HEAD
 	out=(int)next.value().GetValue();
-=======
-	out=std::any_cast<int32_t>(next.value().GetValue());
->>>>>>> parent of 7abb0f3... Update analyser.cpp
 	out*=temp; 
 	if(out==-2147483648&&temp==1)
 	{
@@ -517,11 +513,7 @@ std::optional<CompilationError> Analyser::analyseFactor()
 				return std::make_optional<CompilationError>(_current_pos,ErrorCode::ErrNeedIdentifier);
 			}
 //加载常数
-<<<<<<< HEAD
 			val=(int)next.value().GetValue();//值
-=======
-			val=std::any_cast<int32_t>(next.value().GetValue());//值
->>>>>>> parent of 7abb0f3... Update analyser.cpp
 			_instructions.emplace_back(Operation::LIT, val);
 		break;
 		case LEFT_BRACKET:
