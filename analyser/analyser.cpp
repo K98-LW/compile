@@ -219,7 +219,7 @@ std::optional<CompilationError> Analyser::analyseStatementSequence()
 		{
 // 这里需要你针对不同的预读结果来调用不同的子程序
 			case IDENTIFIER:
-				unreadToken();
+				// unreadToken();
 				err=analyseAssignmentStatement();
 				if(err.has_value())
 				{
@@ -227,7 +227,7 @@ std::optional<CompilationError> Analyser::analyseStatementSequence()
 				}
 			break;
 			case PRINT:
-				unreadToken();
+				// unreadToken();
 				err=analyseOutputStatement();
 				if(err.has_value())
 				{
