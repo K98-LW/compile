@@ -344,7 +344,7 @@ std::optional<CompilationError> Analyser::analyseAssignmentStatement()
 		return {CompilationError(_current_pos, ErrorCode::ErrNotDeclared)};
 	}
 // 是常量
-	if (!isConstant(name))
+	if (isConstant(name))
 	{
 		return {CompilationError(_current_pos, ErrorCode::ErrAssignToConstant)};
 	}
