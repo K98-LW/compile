@@ -3,362 +3,436 @@
 #include <cctype>
 #include <sstream>
 
-namespace miniplc0 {
+namespace miniplc0
+{
 
-std::pair<std::optional<Token>, std::optional<CompilationError>>
-Tokenizer::NextToken() {
-  if (!_initialized) readAll();
-  if (_rdr.bad()){
-    return std::make_pair(
-        std::optional<Token>(),
-        std::make_optional<CompilationError>(0, 0, ErrorCode::ErrStreamError));
-  }
-  if (isEOF()){
-    return std::make_pair(
-        std::optional<Token>(),
-        std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
-  }
-  auto p = nextToken();
-  if (p.second.has_value()) return std::make_pair(p.first, p.second);
-  auto err = checkToken(p.first.value());
-  if (err.has_value()) {
-    return std::make_pair(p.first, err.value());
-  }
-  return std::make_pair(p.first, std::optional<CompilationError>());
+std::pair<std::optional<Token>,std::optional<CompilationError>>Tokenizer::NextToken()// ºËĞÄº¯Êı£¬·µ»ØÏÂÒ»¸ö token
+{
+	if(!_initialized)
+	{
+		readAll();
+	}
+	if(_rdr.bad())
+	{
+		return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(0, 0, ErrorCode::ErrStreamError));
+	}
+	if(isEOF())
+	{
+		return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(0, 0, ErrorCode::ErrEOF));
+	}
+	auto p=nextToken();
+	if(p.second.has_value())
+	{
+		return std::make_pair(p.first, p.second);
+	}
+	auto err=checkToken(p.first.value());
+	if(err.has_value())
+	{
+		return std::make_pair(p.first, err.value());
+	}
+	return std::make_pair(p.first, std::optional<CompilationError>());
 }
 
-std::pair<std::vector<Token>, std::optional<CompilationError>>
-Tokenizer::AllTokens() {
-  std::vector<Token> result;
-  while (true) {
-    auto p = NextToken();
-    if (p.second.has_value()) {
-      if (p.second.value().GetCode() == ErrorCode::ErrEOF)
-        return std::make_pair(result, std::optional<CompilationError>());
-      else
-        return std::make_pair(std::vector<Token>(), p.second);
-    }
-    result.emplace_back(p.first.value());
-  }
+std::pair<std::vector<Token>, std::optional<CompilationError>> Tokenizer::AllTokens()// Ò»´Î·µ»ØËùÓĞ token
+{
+	std::vector<Token> result;
+	while(true)
+	{
+		auto p=NextToken();
+		if(p.second.has_value())
+		{
+			if (p.second.value().GetCode() == ErrorCode::ErrEOF)
+			{
+				return std::make_pair(result, std::optional<CompilationError>());
+			}
+			else
+			{
+				return std::make_pair(std::vector<Token>(), p.second);
+			}
+		}
+		result.emplace_back(p.first.value());
+	}
 }
 
-std::pair<std::optional<Token>, std::optional<CompilationError>>
-Tokenizer::analyzeString(std::stringstream &ss) {
-  std::string s = ss.str();
-  auto pos = previousPos();
-  if(s == "begin")
-    return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,
-                                                s, pos, currentPos()),
-                      std::optional<CompilationError>());
-  else if(s == "end")
-    return std::make_pair(std::make_optional<Token>(TokenType::END,
-                                                s, pos, currentPos()),
-                      std::optional<CompilationError>());
-  else if(s == "const")
-    return std::make_pair(std::make_optional<Token>(TokenType::CONST,
-                                                s, pos, currentPos()),
-                      std::optional<CompilationError>());
-  else if(s == "var")
-    return std::make_pair(std::make_optional<Token>(TokenType::VAR,
-                                                s, pos, currentPos()),
-                      std::optional<CompilationError>());
-  else if(s == "print")
-    return std::make_pair(std::make_optional<Token>(TokenType::PRINT,
-                                                s, pos, currentPos()),
-                      std::optional<CompilationError>());
-  else
-    return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,
-                                                s, pos, currentPos()),
-                      std::optional<CompilationError>());
+// ×¢Òâ£ºÕâÀïµÄ·µ»ØÖµÖĞ Token ºÍ CompilationError Ö»ÄÜ·µ»ØÒ»¸ö£¬²»ÄÜÍ¬Ê±·µ»Ø¡£
+std::pair<std::optional<Token>,std::optional<CompilationError>> Tokenizer::nextToken()// ·µ»ØÏÂÒ»¸ö token£¬ÊÇ NextToken Êµ¼ÊÊµÏÖ²¿·Ö
+{
+	std::stringstream ss;// ÓÃÓÚ´æ´¢ÒÑ¾­¶Áµ½µÄ×é³Éµ±Ç°token×Ö·û
+	std::pair<std::optional<Token>,std::optional<CompilationError>> result;// ·ÖÎötokenµÄ½á¹û£¬×÷Îª´Ëº¯ÊıµÄ·µ»ØÖµ
+	std::pair<int64_t,int64_t> pos;// <ĞĞºÅ£¬ÁĞºÅ>£¬±íÊ¾µ±Ç°tokenµÄµÚÒ»¸ö×Ö·ûÔÚÔ´´úÂëÖĞµÄÎ»ÖÃ
+	DFAState current_state=DFAState::INITIAL_STATE;// ¼ÇÂ¼µ±Ç°×Ô¶¯»úµÄ×´Ì¬£¬½øÈë´Ëº¯ÊıÊ±ÊÇ³õÊ¼×´Ì¬
+// ÕâÊÇÒ»¸öËÀÑ­»·£¬³ı·ÇÖ÷¶¯Ìø³ö
+// Ã¿Ò»´ÎÖ´ĞĞwhileÄÚµÄ´úÂë£¬¶¼¿ÉÄÜµ¼ÖÂ×´Ì¬µÄ±ä¸ü
+	while(true)
+	{
+// ¶ÁÒ»¸ö×Ö·û£¬Çë×¢ÒâautoÍÆµ¼µÃ³öµÄÀàĞÍÊÇstd::optional<char>
+// ÕâÀïÆäÊµÓĞÁ½ÖÖĞ´·¨
+// 1. Ã¿´ÎÑ­»·Ç°Á¢¼´¶ÁÈëÒ»¸ö char
+// 2. Ö»ÓĞÔÚ¿ÉÄÜ»á×ªÒÆµÄ×´Ì¬¶ÁÈëÒ»¸ö char
+// ÒòÎªÎÒÃÇÊµÏÖÁË unread£¬ÎªÁËÊ¡ÊÂÎÒÃÇÑ¡ÔñµÚÒ»ÖÖ
+		auto current_char=nextChar();
+		switch(current_state)// Õë¶Ôµ±Ç°µÄ×´Ì¬½øĞĞ²»Í¬µÄ²Ù×÷
+		{
+// Õâ¸ö case ÎÒÃÇ¸ø³öÁËºËĞÄÂß¼­£¬µ«ÊÇºóÃæµÄ case ²»ÓÃÕÕ°á¡£
+			case INITIAL_STATE:// ³õÊ¼×´Ì¬
+			{
+				if(!current_char.has_value())// ÒÑ¾­¶Áµ½ÁËÎÄ¼şÎ²
+				{
+					return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(0,0,ErrEOF));// ·µ»ØÒ»¸ö¿ÕµÄtoken£¬ºÍ±àÒë´íÎóErrEOF£ºÓöµ½ÁËÎÄ¼şÎ²
+				}
+				auto ch=current_char.value();// »ñÈ¡¶Áµ½µÄ×Ö·ûµÄÖµ£¬×¢ÒâautoÍÆµ¼³öµÄÀàĞÍÊÇchar
+				auto invalid=false;// ±ê¼ÇÊÇ·ñ¶Áµ½ÁË²»ºÏ·¨µÄ×Ö·û£¬³õÊ¼»¯Îª·ñ
+// Ê¹ÓÃÁË×Ô¼º·â×°µÄÅĞ¶Ï×Ö·ûÀàĞÍµÄº¯Êı£¬¶¨ÒåÓÚ tokenizer/utils.hpp
+// see https://en.cppreference.com/w/cpp/string/byte/isblank
+				if(miniplc0::isspace(ch))  // ¶Áµ½µÄ×Ö·ûÊÇ¿Õ°××Ö·û£¨¿Õ¸ñ¡¢»»ĞĞ¡¢ÖÆ±í·ûµÈ£©
+				{
+					current_state=DFAState::INITIAL_STATE;  // ±£Áôµ±Ç°×´Ì¬Îª³õÊ¼×´Ì¬£¬´Ë´¦Ö±½ÓbreakÒ²ÊÇ¿ÉÒÔµÄ
+				}
+				else if(!miniplc0::isprint(ch))//¿ØÖÆ´úÂëºÍÍË¸ñ
+				{
+					invalid=true;
+				}
+				else if(miniplc0::isdigit(ch))  // ¶Áµ½µÄ×Ö·ûÊÇÊı×Ö
+				{
+					current_state=DFAState::UNSIGNED_INTEGER_STATE;  // ÇĞ»»µ½ÎŞ·ûºÅÕûÊıµÄ×´Ì¬
+				}
+				else if(miniplc0::isalpha(ch))  // ¶Áµ½µÄ×Ö·ûÊÇÓ¢ÎÄ×ÖÄ¸
+				{
+					current_state=DFAState::IDENTIFIER_STATE;  // ÇĞ»»µ½±êÊ¶·ûµÄ×´Ì¬
+				}
+				else
+				{
+					switch(ch)
+					{
+						case '=':  // Èç¹û¶Áµ½µÄ×Ö·ûÊÇ`=`£¬ÔòÇĞ»»µ½µÈÓÚºÅµÄ×´Ì¬
+							current_state=DFAState::EQUAL_SIGN_STATE;
+						break;
+						case '-':
+							current_state=DFAState::MINUS_SIGN_STATE;// ÇëÌî¿Õ£ºÇĞ»»µ½¼õºÅµÄ×´Ì¬
+						break;
+						case '+':
+							current_state=DFAState::PLUS_SIGN_STATE;// ÇëÌî¿Õ£ºÇĞ»»µ½¼ÓºÅµÄ×´Ì¬
+						break;
+						case '*':
+							current_state=DFAState::MULTIPLICATION_SIGN_STATE;// ÇëÌî¿Õ£ºÇĞ»»×´Ì¬
+						break;
+						case '/':
+							current_state=DFAState::DIVISION_SIGN_STATE;// ÇëÌî¿Õ£ºÇĞ»»×´Ì¬
+						break;
+///// ÇëÌî¿Õ£º¶ÔÓÚÆäËûµÄ¿É½ÓÊÜ×Ö·û£¬ÇĞ»»µ½¶ÔÓ¦µÄ×´Ì¬
+						case ';':
+							current_state=DFAState::SEMICOLON_STATE;
+						break;
+						case '(':
+							current_state=DFAState::LEFTBRACKET_STATE;
+						break;
+						case ')':
+							current_state=DFAState::RIGHTBRACKET_STATE;
+						break;
+						default:// ²»½ÓÊÜµÄ×Ö·ûµ¼ÖÂµÄ²»ºÏ·¨µÄ×´Ì¬
+							invalid=true;
+						break;
+					}
+				}
+				if(current_state != DFAState::INITIAL_STATE)// Èç¹û¶Áµ½µÄ×Ö·ûµ¼ÖÂÁË×´Ì¬µÄ×ªÒÆ£¬ËµÃ÷ËüÊÇÒ»¸ötokenµÄµÚÒ»¸ö×Ö·û
+				{
+					pos = previousPos();  // ¼ÇÂ¼¸Ã×Ö·ûµÄµÄÎ»ÖÃÎªtokenµÄ¿ªÊ¼Î»ÖÃ
+				}
+				if(invalid)// ¶Áµ½ÁË²»ºÏ·¨µÄ×Ö·û
+				{
+					unreadLast();// »ØÍËÕâ¸ö×Ö·û
+					return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(pos, ErrorCode::ErrInvalidInput));// ·µ»Ø±àÒë´íÎó£º·Ç·¨µÄÊäÈë
+				}
+				// Èç¹û¶Áµ½µÄ×Ö·ûµ¼ÖÂÁË×´Ì¬µÄ×ªÒÆ£¬ËµÃ÷ËüÊÇÒ»¸ötokenµÄµÚÒ»¸ö×Ö·û
+				if(current_state != DFAState::INITIAL_STATE)//ºöÂÔ¿Õ°×
+				{
+					ss<<ch;// ´æ´¢¶Áµ½µÄ×Ö·û
+				}
+				break;
+			}
+			case UNSIGNED_INTEGER_STATE:// µ±Ç°×´Ì¬ÊÇÎŞ·ûºÅÕûÊı
+			{
+// ÇëÌî¿Õ£º
+// Èç¹ûµ±Ç°ÒÑ¾­¶Áµ½ÁËÎÄ¼şÎ²£¬Ôò½âÎöÒÑ¾­¶Áµ½µÄ×Ö·û´®ÎªÕûÊı
+//     ½âÎö³É¹¦Ôò·µ»ØÎŞ·ûºÅÕûÊıÀàĞÍµÄtoken£¬·ñÔò·µ»Ø±àÒë´íÎó
+				if(!current_char.has_value())
+				{
+					std::string temp1;
+					ss>>temp1;
+					ss.clear();
+					int ans;
+					if(temp1=="2147483648")
+					{
+						ans=-2147483648;
+						return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,ans,pos,currentPos()),std::optional<CompilationError>());
+					}
+					try
+					{
+						ans=std::stoi(temp1);
+						return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,ans,pos,currentPos()),std::optional<CompilationError>());
+					}
+					catch(std::exception e)
+					{
+						return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(0,0,ErrIntegerOverflow));
+					}
+				}
+// Èç¹û¶Áµ½µÄ×Ö·ûÊÇÊı×Ö£¬Ôò´æ´¢¶Áµ½µÄ×Ö·û
+				auto ch=current_char.value();
+				if(miniplc0::isdigit(ch))
+				{
+					std::string temp2(1,ch);
+					ss<<temp2;
+				}
+// Èç¹û¶Áµ½µÄ×Ö·û²»ÊÇÊı×Ö£¬Ôò»ØÍË¶Áµ½µÄ×Ö·û£¬²¢½âÎöÒÑ¾­¶Áµ½µÄ×Ö·û´®ÎªÕûÊı
+//     ½âÎö³É¹¦Ôò·µ»ØÎŞ·ûºÅÕûÊıÀàĞÍµÄtoken£¬·ñÔò·µ»Ø±àÒë´íÎó
+				else
+				{
+					unreadLast();
+					std::string temp1;
+					ss>>temp1;
+					ss.clear();
+					int ans;
+					if(temp1=="2147483648")
+					{
+						ans=-2147483648;
+						return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,ans,pos,currentPos()),std::optional<CompilationError>());
+					}
+					try
+					{
+						ans=std::stoi(temp1);
+						return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,ans,pos,currentPos()),std::optional<CompilationError>());
+					}
+					catch(std::exception e)
+					{
+						return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(0,0,ErrIntegerOverflow));
+					}
+				}
+				break;
+			}
+			case IDENTIFIER_STATE:
+			{
+// ÇëÌî¿Õ£º
+// Èç¹ûµ±Ç°ÒÑ¾­¶Áµ½ÁËÎÄ¼şÎ²£¬Ôò½âÎöÒÑ¾­¶Áµ½µÄ×Ö·û´®
+//     Èç¹û½âÎö½á¹ûÊÇ¹Ø¼ü×Ö£¬ÄÇÃ´·µ»Ø¶ÔÓ¦¹Ø¼ü×ÖµÄtoken£¬·ñÔò·µ»Ø±êÊ¶·ûµÄtoken
+				if(!current_char.has_value())
+				{
+					std::string temp1;
+					ss>>temp1;
+					ss.clear();
+					if(temp1=="begin")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="end")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::END,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="const")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::CONST,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="var")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::VAR,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="print")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::PRINT,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+				}
+// Èç¹û¶Áµ½µÄÊÇ×Ö·û»ò×ÖÄ¸£¬Ôò´æ´¢¶Áµ½µÄ×Ö·û
+				auto ch=current_char.value();
+				if(miniplc0::isdigit(ch)||miniplc0::isalpha(ch))
+				{
+					std::string temp2(1,ch);
+					ss<<temp2;
+				}
+// Èç¹û¶Áµ½µÄ×Ö·û²»ÊÇÉÏÊöÇé¿öÖ®Ò»£¬Ôò»ØÍË¶Áµ½µÄ×Ö·û£¬²¢½âÎöÒÑ¾­¶Áµ½µÄ×Ö·û´®
+//     Èç¹û½âÎö½á¹ûÊÇ¹Ø¼ü×Ö£¬ÄÇÃ´·µ»Ø¶ÔÓ¦¹Ø¼ü×ÖµÄtoken£¬·ñÔò·µ»Ø±êÊ¶·ûµÄtoken
+				else
+				{
+					unreadLast();
+					std::string temp1;
+					ss>>temp1;
+					ss.clear();
+					if(temp1=="begin")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="end")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::END,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="const")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::CONST,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="var")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::VAR,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else if(temp1=="print")
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::PRINT,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+					else
+					{
+						return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,temp1,pos,currentPos()),std::optional<CompilationError>());
+					}
+				}
+				break;
+			}
+			case PLUS_SIGN_STATE:// Èç¹ûµ±Ç°×´Ì¬ÊÇ¼ÓºÅ
+			{
+// ÇëË¼¿¼ÕâÀïÎªÊ²Ã´Òª»ØÍË£¬ÔÚÆäËûµØ·½»á²»»áĞèÒª
+				unreadLast();//ÊÇµÄ£¬ÎÒÃÇÃ»ÓĞ¶Á×îºóÒ»¸ö×Ö·û£¬¼´Ê¹ËüÊÇÒ»¸öEOF¡£
+				return std::make_pair(std::make_optional<Token>(TokenType::PLUS_SIGN,'+',pos,currentPos()),std::optional<CompilationError>());
+			}
+			case MINUS_SIGN_STATE:// µ±Ç°×´Ì¬Îª¼õºÅµÄ×´Ì¬
+			{
+// ÇëÌî¿Õ£º»ØÍË£¬²¢·µ»Ø¼õºÅtoken
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::MINUS_SIGN,'-',pos,currentPos()),std::optional<CompilationError>());
+			}
+// ÇëÌî¿Õ£º
+// ¶ÔÓÚÆäËûµÄºÏ·¨×´Ì¬£¬½øĞĞºÏÊÊµÄ²Ù×÷
+// ±ÈÈç½øĞĞ½âÎö¡¢·µ»Øtoken¡¢·µ»Ø±àÒë´íÎó
+			case MULTIPLICATION_SIGN_STATE:
+			{
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::MULTIPLICATION_SIGN,'*',pos,currentPos()),std::optional<CompilationError>());
+			}
+			case DIVISION_SIGN_STATE:
+			{
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::DIVISION_SIGN,'/',pos,currentPos()),std::optional<CompilationError>());
+			}
+			case EQUAL_SIGN_STATE:
+			{
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_SIGN,'=',pos,currentPos()),std::optional<CompilationError>());
+			}
+			case SEMICOLON_STATE:
+			{
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON,';',pos,currentPos()),std::optional<CompilationError>());
+			}
+			case LEFTBRACKET_STATE:
+			{
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::LEFT_BRACKET,'(',pos,currentPos()),std::optional<CompilationError>());
+			}
+			case RIGHTBRACKET_STATE:
+			{
+				unreadLast();
+				return std::make_pair(std::make_optional<Token>(TokenType::RIGHT_BRACKET,')',pos,currentPos()),std::optional<CompilationError>());
+			}
+// Ô¤ÁÏÖ®ÍâµÄ×´Ì¬£¬Èç¹ûÖ´ĞĞµ½ÁËÕâÀï£¬ËµÃ÷³ÌĞòÒì³£
+			default:
+				DieAndPrint("unhandled state.");
+			break;
+		}
+	}
+// Ô¤ÁÏÖ®ÍâµÄ×´Ì¬£¬Èç¹ûÖ´ĞĞµ½ÁËÕâÀï£¬ËµÃ÷³ÌĞòÒì³£
+	return std::make_pair(std::optional<Token>(),std::optional<CompilationError>());
 }
 
-// æ³¨æ„ï¼šè¿™é‡Œçš„è¿”å›å€¼ä¸­ Token å’Œ CompilationError åªèƒ½è¿”å›ä¸€ä¸ªï¼Œä¸èƒ½åŒæ—¶è¿”å›ã€‚
-std::pair<std::optional<Token>, std::optional<CompilationError>>
-Tokenizer::nextToken() {
-  // ç”¨äºå­˜å‚¨å·²ç»è¯»åˆ°çš„ç»„æˆå½“å‰tokenå­—ç¬¦
-  std::stringstream ss;
-  // åˆ†ætokençš„ç»“æœï¼Œä½œä¸ºæ­¤å‡½æ•°çš„è¿”å›å€¼
-  std::pair<std::optional<Token>, std::optional<CompilationError>> result;
-  // <è¡Œå·ï¼Œåˆ—å·>ï¼Œè¡¨ç¤ºå½“å‰tokençš„ç¬¬ä¸€ä¸ªå­—ç¬¦åœ¨æºä»£ç ä¸­çš„ä½ç½®
-  std::pair<int64_t, int64_t> pos;
-  // è®°å½•å½“å‰è‡ªåŠ¨æœºçš„çŠ¶æ€ï¼Œè¿›å…¥æ­¤å‡½æ•°æ—¶æ˜¯åˆå§‹çŠ¶æ€
-  DFAState current_state = DFAState::INITIAL_STATE;
-  // è¿™æ˜¯ä¸€ä¸ªæ­»å¾ªç¯ï¼Œé™¤éä¸»åŠ¨è·³å‡º
-  // æ¯ä¸€æ¬¡æ‰§è¡Œwhileå†…çš„ä»£ç ï¼Œéƒ½å¯èƒ½å¯¼è‡´çŠ¶æ€çš„å˜æ›´
-  while (true) {
-    // è¯»ä¸€ä¸ªå­—ç¬¦ï¼Œè¯·æ³¨æ„autoæ¨å¯¼å¾—å‡ºçš„ç±»å‹æ˜¯std::optional<char>
-    // è¿™é‡Œå…¶å®æœ‰ä¸¤ç§å†™æ³•
-    // 1. æ¯æ¬¡å¾ªç¯å‰ç«‹å³è¯»å…¥ä¸€ä¸ª char
-    // 2. åªæœ‰åœ¨å¯èƒ½ä¼šè½¬ç§»çš„çŠ¶æ€è¯»å…¥ä¸€ä¸ª char
-    // å› ä¸ºæˆ‘ä»¬å®ç°äº† unreadï¼Œä¸ºäº†çœäº‹æˆ‘ä»¬é€‰æ‹©ç¬¬ä¸€ç§
-    auto current_char = nextChar();
-    // é’ˆå¯¹å½“å‰çš„çŠ¶æ€è¿›è¡Œä¸åŒçš„æ“ä½œ
-    switch (current_state) {
-        // åˆå§‹çŠ¶æ€
-        // è¿™ä¸ª case æˆ‘ä»¬ç»™å‡ºäº†æ ¸å¿ƒé€»è¾‘ï¼Œä½†æ˜¯åé¢çš„ case ä¸ç”¨ç…§æ¬ã€‚
-      case INITIAL_STATE: {
-        // å·²ç»è¯»åˆ°äº†æ–‡ä»¶å°¾
-        if (!current_char.has_value())
-          // è¿”å›ä¸€ä¸ªç©ºçš„tokenï¼Œå’Œç¼–è¯‘é”™è¯¯ErrEOFï¼šé‡åˆ°äº†æ–‡ä»¶å°¾
-          return std::make_pair(
-              std::optional<Token>(),
-              std::make_optional<CompilationError>(0, 0, ErrEOF));
-
-        // è·å–è¯»åˆ°çš„å­—ç¬¦çš„å€¼ï¼Œæ³¨æ„autoæ¨å¯¼å‡ºçš„ç±»å‹æ˜¯char
-        auto ch = current_char.value();
-        // æ ‡è®°æ˜¯å¦è¯»åˆ°äº†ä¸åˆæ³•çš„å­—ç¬¦ï¼Œåˆå§‹åŒ–ä¸ºå¦
-        auto invalid = false;
-
-        // ä½¿ç”¨äº†è‡ªå·±å°è£…çš„åˆ¤æ–­å­—ç¬¦ç±»å‹çš„å‡½æ•°ï¼Œå®šä¹‰äº tokenizer/utils.hpp
-        // see https://en.cppreference.com/w/cpp/string/byte/isblank
-        if (miniplc0::isspace(
-                ch))  // è¯»åˆ°çš„å­—ç¬¦æ˜¯ç©ºç™½å­—ç¬¦ï¼ˆç©ºæ ¼ã€æ¢è¡Œã€åˆ¶è¡¨ç¬¦ç­‰ï¼‰
-          current_state = DFAState::
-              INITIAL_STATE;  // ä¿ç•™å½“å‰çŠ¶æ€ä¸ºåˆå§‹çŠ¶æ€ï¼Œæ­¤å¤„ç›´æ¥breakä¹Ÿæ˜¯å¯ä»¥çš„
-        else if (!miniplc0::isprint(ch))  // control codes and backspace
-          invalid = true;
-        else if (miniplc0::isdigit(ch))  // è¯»åˆ°çš„å­—ç¬¦æ˜¯æ•°å­—
-          current_state =
-              DFAState::UNSIGNED_INTEGER_STATE;  // åˆ‡æ¢åˆ°æ— ç¬¦å·æ•´æ•°çš„çŠ¶æ€
-        else if (miniplc0::isalpha(ch))  // è¯»åˆ°çš„å­—ç¬¦æ˜¯è‹±æ–‡å­—æ¯
-          current_state = DFAState::IDENTIFIER_STATE;  // åˆ‡æ¢åˆ°æ ‡è¯†ç¬¦çš„çŠ¶æ€
-        else {
-          switch (ch) {
-            case '=':  // å¦‚æœè¯»åˆ°çš„å­—ç¬¦æ˜¯`=`ï¼Œåˆ™åˆ‡æ¢åˆ°ç­‰äºå·çš„çŠ¶æ€
-              current_state = DFAState::EQUAL_SIGN_STATE;
-              break;
-            case '-':
-              // è¯·å¡«ç©ºï¼šåˆ‡æ¢åˆ°å‡å·çš„çŠ¶æ€
-              // solution code
-              current_state = DFAState::MINUS_SIGN_STATE;
-              break;
-            case '+':
-              // è¯·å¡«ç©ºï¼šåˆ‡æ¢åˆ°åŠ å·çš„çŠ¶æ€
-              // solution code
-              current_state = DFAState::PLUS_SIGN_STATE;
-              break;
-            case '*':
-              // è¯·å¡«ç©ºï¼šåˆ‡æ¢çŠ¶æ€
-              // solution code
-              current_state = DFAState::MULTIPLICATION_SIGN_STATE;
-              break;
-            case '/':
-              // è¯·å¡«ç©ºï¼šåˆ‡æ¢çŠ¶æ€
-              // solution code
-              current_state = DFAState::DIVISION_SIGN_STATE;
-              break;
-
-            ///// è¯·å¡«ç©ºï¼š
-            ///// å¯¹äºå…¶ä»–çš„å¯æ¥å—å­—ç¬¦
-            ///// åˆ‡æ¢åˆ°å¯¹åº”çš„çŠ¶æ€
-            // solution code
-            case '(':
-              current_state = DFAState::LEFTBRACKET_STATE;
-              break;
-            case ')':
-              current_state = DFAState::RIGHTBRACKET_STATE;
-              break;
-            case ';':
-              current_state = DFAState::SEMICOLON_STATE;
-              break;
-
-            // ä¸æ¥å—çš„å­—ç¬¦å¯¼è‡´çš„ä¸åˆæ³•çš„çŠ¶æ€
-            default:
-              invalid = true;
-              break;
-          }
-        }
-        // å¦‚æœè¯»åˆ°çš„å­—ç¬¦å¯¼è‡´äº†çŠ¶æ€çš„è½¬ç§»ï¼Œè¯´æ˜å®ƒæ˜¯ä¸€ä¸ªtokençš„ç¬¬ä¸€ä¸ªå­—ç¬¦
-        if (current_state != DFAState::INITIAL_STATE)
-          pos = previousPos();  // è®°å½•è¯¥å­—ç¬¦çš„çš„ä½ç½®ä¸ºtokençš„å¼€å§‹ä½ç½®
-        // è¯»åˆ°äº†ä¸åˆæ³•çš„å­—ç¬¦
-        if (invalid) {
-          // å›é€€è¿™ä¸ªå­—ç¬¦
-          unreadLast();
-          // è¿”å›ç¼–è¯‘é”™è¯¯ï¼šéæ³•çš„è¾“å…¥
-          return std::make_pair(std::optional<Token>(),
-                                std::make_optional<CompilationError>(
-                                    pos, ErrorCode::ErrInvalidInput));
-        }
-        // å¦‚æœè¯»åˆ°çš„å­—ç¬¦å¯¼è‡´äº†çŠ¶æ€çš„è½¬ç§»ï¼Œè¯´æ˜å®ƒæ˜¯ä¸€ä¸ªtokençš„ç¬¬ä¸€ä¸ªå­—ç¬¦
-        if (current_state != DFAState::INITIAL_STATE)  // ignore white spaces
-          ss << ch;                                    // å­˜å‚¨è¯»åˆ°çš„å­—ç¬¦
-        break;
-      }
-
-        // å½“å‰çŠ¶æ€æ˜¯æ— ç¬¦å·æ•´æ•°
-      case UNSIGNED_INTEGER_STATE: {
-        // è¯·å¡«ç©ºï¼š
-        //solution code
-        // å¦‚æœå½“å‰å·²ç»è¯»åˆ°äº†æ–‡ä»¶å°¾ï¼Œåˆ™è§£æå·²ç»è¯»åˆ°çš„å­—ç¬¦ä¸²ä¸ºæ•´æ•°
-        if (isEOF())
-          return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,
-                                                        ss.str(), pos, currentPos()),
-                              std::optional<CompilationError>());
-        //     è§£ææˆåŠŸåˆ™è¿”å›æ— ç¬¦å·æ•´æ•°ç±»å‹çš„tokenï¼Œå¦åˆ™è¿”å›ç¼–è¯‘é”™è¯¯
-        auto ch = current_char.value();
-        // å¦‚æœè¯»åˆ°çš„å­—ç¬¦æ˜¯æ•°å­—ï¼Œåˆ™å­˜å‚¨è¯»åˆ°çš„å­—ç¬¦
-        if (miniplc0::isdigit(ch))
-          ss << ch;
-        // å¦‚æœè¯»åˆ°çš„å­—ç¬¦ä¸æ˜¯æ•°å­—ï¼Œåˆ™å›é€€è¯»åˆ°çš„å­—ç¬¦ï¼Œå¹¶è§£æå·²ç»è¯»åˆ°çš„å­—ç¬¦ä¸²ä¸ºæ•´æ•°
-        else {
-          unreadLast();
-          return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,
-                                                        ss.str(), pos, currentPos()),
-                              std::optional<CompilationError>());
-        }
-        //     è§£ææˆåŠŸåˆ™è¿”å›æ— ç¬¦å·æ•´æ•°ç±»å‹çš„tokenï¼Œå¦åˆ™è¿”å›ç¼–è¯‘é”™è¯¯
-        break;
-      }
-      case IDENTIFIER_STATE: {
-        // è¯·å¡«ç©ºï¼š
-        // solution code
-        // å¦‚æœå½“å‰å·²ç»è¯»åˆ°äº†æ–‡ä»¶å°¾ï¼Œåˆ™è§£æå·²ç»è¯»åˆ°çš„å­—ç¬¦ä¸²
-        //     å¦‚æœè§£æç»“æœæ˜¯å…³é”®å­—ï¼Œé‚£ä¹ˆè¿”å›å¯¹åº”å…³é”®å­—çš„tokenï¼Œå¦åˆ™è¿”å›æ ‡è¯†ç¬¦çš„token
-        if (isEOF())
-          return Tokenizer::analyzeString(ss);
-        // å¦‚æœè¯»åˆ°çš„æ˜¯å­—ç¬¦æˆ–å­—æ¯ï¼Œåˆ™å­˜å‚¨è¯»åˆ°çš„å­—ç¬¦
-        // å¦‚æœè¯»åˆ°çš„å­—ç¬¦ä¸æ˜¯ä¸Šè¿°æƒ…å†µä¹‹ä¸€ï¼Œåˆ™å›é€€è¯»åˆ°çš„å­—ç¬¦ï¼Œå¹¶è§£æå·²ç»è¯»åˆ°çš„å­—ç¬¦ä¸²
-        //     å¦‚æœè§£æç»“æœæ˜¯å…³é”®å­—ï¼Œé‚£ä¹ˆè¿”å›å¯¹åº”å…³é”®å­—çš„tokenï¼Œå¦åˆ™è¿”å›æ ‡è¯†ç¬¦çš„token
-        auto ch = current_char.value();
-        if(miniplc0::isdigit(ch) || miniplc0::isalpha(ch))
-          ss << ch;
-        else {
-          unreadLast();
-          return Tokenizer::analyzeString(ss);
-        }
-        break;
-      }
-
-        // å¦‚æœå½“å‰çŠ¶æ€æ˜¯åŠ å·
-      case PLUS_SIGN_STATE: {
-        // è¯·æ€è€ƒè¿™é‡Œä¸ºä»€ä¹ˆè¦å›é€€ï¼Œåœ¨å…¶ä»–åœ°æ–¹ä¼šä¸ä¼šéœ€è¦
-        // answer: æœ¬æ¥åŠ å·å°±å·²ç»ç»ˆæ­¢äº†ï¼Œè¿™ä¸ªç¬¦å·å°±ä¸è¯¥è¯»å…¥
-
-        unreadLast();  // Yes, we unread last char even if it's an EOF.
-        return std::make_pair(std::make_optional<Token>(TokenType::PLUS_SIGN,
-                                                        '+', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-        // å½“å‰çŠ¶æ€ä¸ºå‡å·çš„çŠ¶æ€
-      case MINUS_SIGN_STATE: {
-        // è¯·å¡«ç©ºï¼šå›é€€ï¼Œå¹¶è¿”å›å‡å·token
-        // solution code
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::MINUS_SIGN,
-                                                        '-', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-
-        // è¯·å¡«ç©ºï¼š
-        // å¯¹äºå…¶ä»–çš„åˆæ³•çŠ¶æ€ï¼Œè¿›è¡Œåˆé€‚çš„æ“ä½œ
-        // æ¯”å¦‚è¿›è¡Œè§£æã€è¿”å›tokenã€è¿”å›ç¼–è¯‘é”™è¯¯
-      //solution code
-      case MULTIPLICATION_SIGN_STATE: {
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::MULTIPLICATION_SIGN,
-                                                        '*', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-      case DIVISION_SIGN_STATE: {
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::DIVISION_SIGN,
-                                                        '/', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-      case LEFTBRACKET_STATE: {
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::LEFT_BRACKET,
-                                                        '(', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-      case RIGHTBRACKET_STATE: {
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::RIGHT_BRACKET,
-                                                        ')', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-      case SEMICOLON_STATE: {
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::SEMICOLON,
-                                                        ';', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-      case EQUAL_SIGN_STATE: {
-        unreadLast();
-        return std::make_pair(std::make_optional<Token>(TokenType::EQUAL_SIGN,
-                                                        '=', pos, currentPos()),
-                              std::optional<CompilationError>());
-      }
-
-        // é¢„æ–™ä¹‹å¤–çš„çŠ¶æ€ï¼Œå¦‚æœæ‰§è¡Œåˆ°äº†è¿™é‡Œï¼Œè¯´æ˜ç¨‹åºå¼‚å¸¸
-      default:
-        DieAndPrint("unhandled state.");
-        break;
-    }
-  }
-  // é¢„æ–™ä¹‹å¤–çš„çŠ¶æ€ï¼Œå¦‚æœæ‰§è¡Œåˆ°äº†è¿™é‡Œï¼Œè¯´æ˜ç¨‹åºå¼‚å¸¸
-  return std::make_pair(std::optional<Token>(),
-                        std::optional<CompilationError>());
+std::optional<CompilationError> Tokenizer::checkToken(const Token& t)// ¼ì²é Token µÄºÏ·¨ĞÔ
+{
+	switch(t.GetType())
+	{
+		case IDENTIFIER:
+		{
+			auto val=t.GetValueString();
+			if(miniplc0::isdigit(val[0]))
+			{
+				return std::make_optional<CompilationError>(t.GetStartPos().first, t.GetStartPos().second,ErrorCode::ErrInvalidIdentifier);
+			}
+			break;
+		}
+		default:
+		break;
+	}
+	return {};
 }
 
-
-std::optional<CompilationError> Tokenizer::checkToken(const Token& t) {
-  switch (t.GetType()) {
-    case IDENTIFIER: {
-      auto val = t.GetValueString();
-      if (miniplc0::isdigit(val[0]))
-        return std::make_optional<CompilationError>(
-            t.GetStartPos().first, t.GetStartPos().second,
-            ErrorCode::ErrInvalidIdentifier);
-      break;
-    }
-    default:
-      break;
-  }
-  return {};
+void Tokenizer::readAll()
+{
+	if(_initialized)
+	{
+		return;
+	}
+	for(std::string tp; std::getline(_rdr, tp);)
+	{
+		_lines_buffer.emplace_back(std::move(tp + "\n"));
+	}
+	_initialized = true;
+	_ptr = std::make_pair<int64_t, int64_t>(0, 0);
+	return;
 }
 
-void Tokenizer::readAll() {
-  if (_initialized) return;
-  for (std::string tp; std::getline(_rdr, tp);)
-    _lines_buffer.emplace_back(std::move(tp + "\n"));
-  _initialized = true;
-  _ptr = std::make_pair<int64_t, int64_t>(0, 0);
-  return;
+//×¢Òâ£º¸ù¾İstd::vector::end()µÄÉè¼Æ£¬ÎÒÃÇÔÊĞí´Ëº¯Êı·µ»ØÒ»¸ö³¬³ö±ß½çµÄposition¡£
+std::pair<uint64_t, uint64_t> Tokenizer::nextPos()
+{
+	if(_ptr.first >= _lines_buffer.size())
+	{
+		DieAndPrint("advance after EOF");
+	}
+	if (_ptr.second == _lines_buffer[_ptr.first].size() - 1)
+	{
+		return std::make_pair(_ptr.first + 1, 0);
+	}
+	else
+	{
+		return std::make_pair(_ptr.first, _ptr.second + 1);
+	}
 }
 
-// Note: We allow this function to return a postion which is out of bound
-// according to the design like std::vector::end().
-std::pair<uint64_t, uint64_t> Tokenizer::nextPos() {
-  if (_ptr.first >= _lines_buffer.size()) DieAndPrint("advance after EOF");
-  if (_ptr.second == _lines_buffer[_ptr.first].size() - 1)
-    return std::make_pair(_ptr.first + 1, 0);
-  else
-    return std::make_pair(_ptr.first, _ptr.second + 1);
+std::pair<uint64_t, uint64_t> Tokenizer::currentPos()
+{
+	return _ptr;
 }
 
-std::pair<uint64_t, uint64_t> Tokenizer::currentPos() { return _ptr; }
-
-std::pair<uint64_t, uint64_t> Tokenizer::previousPos() {
-  if (_ptr.first == 0 && _ptr.second == 0)
-    DieAndPrint("previous position from beginning");
-  if (_ptr.second == 0)
-    return std::make_pair(_ptr.first - 1,
-                          _lines_buffer[_ptr.first - 1].size() - 1);
-  else
-    return std::make_pair(_ptr.first, _ptr.second - 1);
+std::pair<uint64_t, uint64_t> Tokenizer::previousPos()
+{
+	if (_ptr.first == 0 && _ptr.second == 0)
+	{
+		DieAndPrint("previous position from beginning");
+	}
+	if (_ptr.second == 0)
+	{
+		return std::make_pair(_ptr.first - 1,_lines_buffer[_ptr.first - 1].size() - 1);
+	}
+	else
+	{
+		return std::make_pair(_ptr.first, _ptr.second - 1);
+	}
 }
 
-std::optional<char> Tokenizer::nextChar() {
-  if (isEOF()) return {};  // EOF
-  auto result = _lines_buffer[_ptr.first][_ptr.second];
-  _ptr = nextPos();
-  return result;
+std::optional<char> Tokenizer::nextChar()
+{
+	if(isEOF())
+	{
+		return {};
+	}
+	auto result=_lines_buffer[_ptr.first][_ptr.second];
+	_ptr=nextPos();
+	return result;
 }
 
-bool Tokenizer::isEOF() { return _ptr.first >= _lines_buffer.size(); }
+bool Tokenizer::isEOF()
+{
+	return _ptr.first>=_lines_buffer.size();
+}
 
-// Note: Is it evil to unread a buffer?
-void Tokenizer::unreadLast() { _ptr = previousPos(); }
+//×¢Òâ£ºÎ´¶Á»º³åÇøÊÇ·ñÓĞº¦£¿
+void Tokenizer::unreadLast()
+{
+	_ptr=previousPos();
+}
+
 }  // namespace miniplc0
