@@ -182,10 +182,12 @@ std::optional<CompilationError> Analyser::analyseVariableDeclaration()
 // 把变量加入符号表
 		if(initialized)
 		{
+      printf("have_value\n");
 			addVariable(ident);// 已经初始化的变量的值的位置正好是之前表达式计算结果，所以不做处理
 		}
 		else
 		{
+      printf("not have_value\n");
 			addUninitializedVariable(ident);// 加载一个任意的初始值
 			_instructions.emplace_back(Operation::LIT,0);
 		}
