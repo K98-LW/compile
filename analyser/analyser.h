@@ -68,6 +68,7 @@ class Analyser final {
   // <因子>
   std::optional<CompilationError> analyseFactor();
 
+
   // Token 缓冲区相关操作
 
   // 返回下一个 token
@@ -93,6 +94,7 @@ class Analyser final {
   bool isConstant(const std::string &);
   // 获得 {变量，常量} 在栈上的偏移
   int32_t getIndex(const std::string &);
+  void makeInitialized(const std::string &var_name);
 
  private:
   std::vector<Token> _tokens;
