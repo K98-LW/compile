@@ -142,6 +142,7 @@ std::optional<CompilationError> Analyser::analyseVariableDeclaration()
 // 'var'
 		if(next.value().GetType()!=TokenType::VAR)
 		{
+      printf("not var\n");
 			unreadToken();
 			return {};
 		}
