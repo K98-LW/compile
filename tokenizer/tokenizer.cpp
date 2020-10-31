@@ -189,6 +189,7 @@ Tokenizer::nextToken() {
         // 如果读到的字符不是上述情况之一，则回退读到的字符，并解析已经读到的字符串
         //     如果解析结果是关键字，那么返回对应关键字的token，否则返回标识符的token
         if(!current_char.has_value()){
+          std::cout << ss.str() << '\n';
           if(isKeyWord(ss.str())){
             if(ss.str() == "begin"){
               start_pos = startPos(ss.str(),currentPos());
