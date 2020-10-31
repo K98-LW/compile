@@ -157,7 +157,7 @@ Tokenizer::nextToken() {
         if (!current_char.has_value()){
           if(isUnsignedDigit(ss.str())){
             start_pos = startPos(ss.str(),currentPos());
-            return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,std::stoi(ss.str()),start_pos,currentPos()),std::nullopt);
+            return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,std::stoi(ss.str()),start_pos,currentPos()),std::optional<CompilationError>());
           }
           else{
             return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(pos,ErrorCode::ErrInvalidInput));
@@ -172,7 +172,7 @@ Tokenizer::nextToken() {
             unreadLast();
             if(isUnsignedDigit(ss.str())){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,std::stoi(ss.str()),start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::UNSIGNED_INTEGER,std::stoi(ss.str()),start_pos,currentPos()),std::optional<CompilationError>());
             }
             else{
               return std::make_pair(std::optional<Token>(),std::make_optional<CompilationError>(pos,ErrorCode::ErrInvalidInput));
@@ -194,28 +194,28 @@ Tokenizer::nextToken() {
           if(isKeyWord(ss.str())){
             if(ss.str() == "begin"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "end"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "var"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "const"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::CONST,"const",start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::CONST,"const",start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "print"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::PRINT,"print",start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::PRINT,"print",start_pos,currentPos()),std::optional<CompilationError>());
             }
           }
           else{
             start_pos = startPos(ss.str(),currentPos());
-            return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,ss.str(),start_pos,currentPos()),std::nullopt);
+            return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
           }
         }
         else{
@@ -228,28 +228,28 @@ Tokenizer::nextToken() {
             if(isKeyWord(ss.str())){
               if(ss.str() == "begin"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),std::nullopt);
+                return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),sstd::optional<CompilationError>());
               }
               else if(ss.str() == "end"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),std::nullopt);
+                return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),sstd::optional<CompilationError>());
               }
               else if(ss.str() == "var"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),std::nullopt);
+                return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),sstd::optional<CompilationError>());
               }
               else if(ss.str() == "const"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::CONST,"const",start_pos,currentPos()),std::nullopt);
+                return std::make_pair(std::make_optional<Token>(TokenType::CONST,"const",start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "print"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::PRINT,"print",start_pos,currentPos()),std::nullopt);
+                return std::make_pair(std::make_optional<Token>(TokenType::PRINT,"print",start_pos,currentPos()),std::optional<CompilationError>());
               }
             }
             else{
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,ss.str(),start_pos,currentPos()),std::nullopt);
+              return std::make_pair(std::make_optional<Token>(TokenType::IDENTIFIER,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
             }
           }
         }
