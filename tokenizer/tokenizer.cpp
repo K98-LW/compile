@@ -194,23 +194,23 @@ Tokenizer::nextToken() {
           if(isKeyWord(ss.str())){
             if(ss.str() == "begin"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),std::optional<CompilationError>());
+              return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "end"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),std::optional<CompilationError>());
+              return std::make_pair(std::make_optional<Token>(TokenType::END,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "var"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),std::optional<CompilationError>());
+              return std::make_pair(std::make_optional<Token>(TokenType::VAR,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "const"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::CONST,"const",start_pos,currentPos()),std::optional<CompilationError>());
+              return std::make_pair(std::make_optional<Token>(TokenType::CONST,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
             }
             else if(ss.str() == "print"){
               start_pos = startPos(ss.str(),currentPos());
-              return std::make_pair(std::make_optional<Token>(TokenType::PRINT,"print",start_pos,currentPos()),std::optional<CompilationError>());
+              return std::make_pair(std::make_optional<Token>(TokenType::PRINT,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
             }
           }
           else{
@@ -228,23 +228,23 @@ Tokenizer::nextToken() {
             if(isKeyWord(ss.str())){
               if(ss.str() == "begin"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),std::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "end"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),std::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::END,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "var"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),std::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::VAR,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "const"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::CONST,"const",start_pos,currentPos()),std::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::CONST,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "print"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::PRINT,"print",start_pos,currentPos()),std::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::PRINT,ss.str(),start_pos,currentPos()),std::optional<CompilationError>());
               }
             }
             else{
