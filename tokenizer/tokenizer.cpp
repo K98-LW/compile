@@ -228,15 +228,15 @@ Tokenizer::nextToken() {
             if(isKeyWord(ss.str())){
               if(ss.str() == "begin"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),sstd::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::BEGIN,"begin",start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "end"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),sstd::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::END,"end",start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "var"){
                 start_pos = startPos(ss.str(),currentPos());
-                return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),sstd::optional<CompilationError>());
+                return std::make_pair(std::make_optional<Token>(TokenType::VAR,"var",start_pos,currentPos()),std::optional<CompilationError>());
               }
               else if(ss.str() == "const"){
                 start_pos = startPos(ss.str(),currentPos());
