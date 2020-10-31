@@ -20,7 +20,7 @@ class Tokenizer final {
 
   // 状态机的所有状态
   enum DFAState {
-    INITIAL_STATE,
+    INITIAL_STATE, 
     UNSIGNED_INTEGER_STATE,
     PLUS_SIGN_STATE,
     MINUS_SIGN_STATE,
@@ -44,8 +44,6 @@ class Tokenizer final {
   std::pair<std::optional<Token>, std::optional<CompilationError>> NextToken();
   // 一次返回所有 token
   std::pair<std::vector<Token>, std::optional<CompilationError>> AllTokens();
-  // 分析关键词
-  std::pair<std::optional<Token>, std::optional<CompilationError>> analyzeString(std::stringstream &ss);
 
  private:
   // 检查 Token 的合法性
@@ -82,8 +80,10 @@ class Tokenizer final {
   std::pair<uint64_t, uint64_t> previousPos();
   std::optional<char> nextChar();
   bool isEOF();
+  bool isUnsignedDigit(std::string );
+  bool isKeyWord(std::string);
   void unreadLast();
-
+  std::pair<uint64_t,uint64_t> startPos(std::string ,std::pair<uint64_t,uint64_t>);
  private:
   std::istream &_rdr;
   // 如果没有初始化，那么就 readAll

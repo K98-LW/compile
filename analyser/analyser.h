@@ -11,7 +11,6 @@
 #include "instruction/instruction.h"
 #include "tokenizer/token.h"
 
-
 namespace miniplc0 {
 
 class Analyser final {
@@ -52,8 +51,6 @@ class Analyser final {
   std::optional<CompilationError> analyseVariableDeclaration();
   // <语句序列>
   std::optional<CompilationError> analyseStatementSequence();
-  // <无符号整数>
-  std::optional<CompilationError> analyseUnsignedInt(long long &out, unsigned int max_value);
   // <常表达式>
   // 这里的 out 是常表达式的值
   std::optional<CompilationError> analyseConstantExpression(int32_t &out);
@@ -67,7 +64,6 @@ class Analyser final {
   std::optional<CompilationError> analyseItem();
   // <因子>
   std::optional<CompilationError> analyseFactor();
-
 
   // Token 缓冲区相关操作
 
@@ -84,6 +80,8 @@ class Analyser final {
   void addVariable(const Token &);
   void addConstant(const Token &);
   void addUninitializedVariable(const Token &);
+  // 将变量改为已声明
+  void makeInitialized(const std::string &var_name);
   // 是否被声明过
   bool isDeclared(const std::string &);
   // 是否是未初始化的变量
@@ -94,7 +92,6 @@ class Analyser final {
   bool isConstant(const std::string &);
   // 获得 {变量，常量} 在栈上的偏移
   int32_t getIndex(const std::string &);
-  void makeInitialized(const std::string &var_name);
 
  private:
   std::vector<Token> _tokens;
