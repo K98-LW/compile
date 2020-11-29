@@ -1,8 +1,10 @@
 package Tokenlizer;
 
+import Reader.Reader;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import Reader.Reader;
 
 final public class Tokenlizer {
 	private static Tokenlizer tokenlizer;
@@ -13,15 +15,15 @@ final public class Tokenlizer {
 	
 	private Tokenlizer() {}
 	
-	public static Tokenlizer getTokenlizer() {
+	public static Tokenlizer getInstance() {
 		if(tokenlizer  == null) {
 			tokenlizer = new Tokenlizer();
 		}
 		return tokenlizer;
 	}
 	
-	public void init() {
-		this.reader = Reader.getReader();
+	public void init() throws IOException {
+		this.reader = Reader.getInstance();
 		this.tokenValue = new StringBuilder();
 		this.tokenList = new ArrayList<Token>();
 	}
@@ -144,16 +146,19 @@ final public class Tokenlizer {
 		int c = this.reader.getChar();
 		
 		while(!isBlank(c) && !this.reader.isEOF()) {
-			this.tokenValue.append(c);
-			this.reader.nextChar();
-			
 			if(c == '.') {
+				this.tokenValue.append((char)c);
+				this.reader.nextChar();
 				doubleState();
 				return;
 			}
 			else if(!isDigit(c)) {
-				throw new TokenlizerError("Unknown number.");
+				this.reader.lastChar();
+				break;
 			}
+
+			this.tokenValue.append((char)c);
+			this.reader.nextChar();
 			
 			c = this.reader.getChar();
 		}
@@ -173,7 +178,7 @@ final public class Tokenlizer {
 		}
 		
 		while(!isBlank(c) && this.reader.isEOF()) {
-			this.tokenValue.append(c);
+			this.tokenValue.append((char)c);
 			this.reader.nextChar();
 			
 			if(c == 'e' || c == 'E') {
@@ -204,13 +209,14 @@ final public class Tokenlizer {
 		int c = this.reader.getChar();
 		
 		while(!isBlank(c) && !this.reader.isEOF()) {
-			this.tokenValue.append(c);
-			this.reader.nextChar();
-			
 			if(!isDigit(c) && !isAlpha(c) && c != '_') {
-				throw new TokenlizerError(String.format("Unknown %c in a word.", c));
+				this.reader.lastChar();
+				break;
 			}
-			
+
+			this.tokenValue.append((char)c);
+			this.reader.nextChar();
+
 			c = this.reader.getChar();
 		}
 		
@@ -262,7 +268,7 @@ final public class Tokenlizer {
 			this.tokenValue.append(getEscapeChar());
 		}
 		else {
-			this.tokenValue.append(c);
+			this.tokenValue.append((char)c);
 		}
 		
 		// '
@@ -318,7 +324,7 @@ final public class Tokenlizer {
 				this.tokenValue.append(getEscapeChar());
 			}
 			else {
-				this.tokenValue.append(c);
+				this.tokenValue.append((char)c);
 				this.reader.nextChar();
 			}
 			

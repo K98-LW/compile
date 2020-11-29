@@ -1,18 +1,39 @@
 package Reader;
 
+import java.io.*;
+
 public class Reader {
 	private static Reader reader;
 	private int location;
 	private String string;
 	
-	private Reader() {
+	private Reader() throws IOException {
 		this.location = 0;
-		this.string = new String();
+
+		StringBuilder stringBuilder = new StringBuilder();
+		File file = new File("E:\\compile\\src\\Reader\\code");
+//		System.out.println(file.exists());
+		FileInputStream fileInputStream = new FileInputStream(file);
+		BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+		while(bufferedInputStream.available() > 0){
+			stringBuilder.append((char)bufferedInputStream.read());
+		}
+		bufferedInputStream.close();
+		fileInputStream.close();
+
+		this.string = stringBuilder.toString();
+//		System.out.println(stringBuilder.toString());
 	}
 	
-	public static Reader getReader() {
+	public static Reader getInstance() throws IOException {
 		if(reader == null) {
-			reader = new Reader();
+			try {
+				reader = new Reader();
+			} catch (IOException e){
+				System.out.println("File not found.");
+			} catch(Exception e){
+				System.out.println("Other error.");
+			}
 		}
 		return reader;
 	}
