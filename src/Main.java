@@ -1,3 +1,6 @@
+import Syntacticor.Syntacticor;
+import Syntacticor.SyntacticorError;
+import Syntacticor.SyntaxTreeNode;
 import Tokenlizer.Token;
 import Tokenlizer.Tokenlizer;
 import Tokenlizer.TokenlizerError;
@@ -7,7 +10,7 @@ import java.util.List;
 //import Tokenlizer.Tokenlizer;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SyntacticorError {
         Tokenlizer tokenlizer = Tokenlizer.getInstance();
         try{
             tokenlizer.init();
@@ -25,6 +28,14 @@ public class Main {
         for(Token t : tokenList){
             System.out.println("Type: " + t.getTokenType() + "\t\tValue: " + t.getValue());
         }
+
+        Syntacticor syntacticor = Syntacticor.getInstance();
+        syntacticor.init(tokenList);
+        SyntaxTreeNode program = syntacticor.analyze();
+
+        System.out.println("\nSyntacticor complete.\n");
+
+        syntacticor.printTree(program, 0);
 
         return;
     }

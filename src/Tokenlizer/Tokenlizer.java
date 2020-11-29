@@ -247,7 +247,7 @@ final public class Tokenlizer {
 			case "return":
 				return TokenType.RETURN_KW;
 			case "break":
-				return TokenType.BREAK_AW;
+				return TokenType.BREAK_KW;
 			case "continue":
 				return TokenType.CONTINUE_KW;
 			default:

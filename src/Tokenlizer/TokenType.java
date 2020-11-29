@@ -9,7 +9,7 @@ public enum TokenType {
 	IF_KW,						// 'if'
 	ELSE_KW,					// 'else'
 	RETURN_KW,					// 'return'
-	BREAK_AW,					// 'break'
+	BREAK_KW,					// 'break'
 	CONTINUE_KW,				// 'continue'
 	
 	UINT_LITERAL,
