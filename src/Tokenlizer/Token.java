@@ -24,4 +24,56 @@ final public class Token {
 			return null;
 		}
 	}
+
+	public boolean isBinaryOp(){
+		switch(this.type){
+			case PLUS:
+			case MINUS:
+			case MUL:
+			case DIV:
+			case EQ:
+			case NEQ:
+			case LT:
+			case GT:
+			case LE:
+			case GE:
+			case ASSIGN:
+			case AS_KW:
+				return true;
+		}
+		return false;
+	}
+
+	public int getPriority(){
+		switch(this.type){
+			case ASSIGN:
+				return 1;
+			case GT:
+			case LT:
+			case GE:
+			case LE:
+			case EQ:
+			case NEQ:
+				return 2;
+			case PLUS:
+			case MINUS:
+				return 3;
+			case MUL:
+			case DIV:
+				return 4;
+			case AS_KW:
+				return 5;
+			default:
+				return 6;
+		}
+	}
+
+	public boolean isRightAssoc(){
+		switch(this.type){
+			case ASSIGN:
+				return true;
+			default:
+				return false;
+		}
+	}
 }

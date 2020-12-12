@@ -7,8 +7,14 @@ import java.util.List;
 
 public class Syntacticor {
     private static Syntacticor syntacticor;
+    private static int privateTable[][];
+
     private List<Token> tokenList;
     private int location;
+
+    static{
+        privateTable = new int[136][136];
+    }
 
     private Syntacticor() {}
 
@@ -49,6 +55,7 @@ public class Syntacticor {
         SyntaxTreeNode root = new SyntaxTreeNode(SyntaxTreeNodeType.PROGRAM);
         while(!isEND()){
             if(getToken().getTokenType() == TokenType.FN_KW){
+                System.out.println("to Function");
                 root.appendChild(analyzeFunction());
             }
             else if(getToken().getTokenType()==TokenType.LET_KW
@@ -125,7 +132,6 @@ public class Syntacticor {
 
         nextToken();
         function.appendChild(analyzeBlockStmt());
-
         return function;
     }
 
@@ -478,106 +484,205 @@ public class Syntacticor {
     }
 
     private SyntaxTreeNode analyzeExpr() throws SyntacticorError {
-        SyntaxTreeNode expr = new SyntaxTreeNode(SyntaxTreeNodeType.EXPR);
+        SyntaxTreeNode lhs = analyzePrimaryExpr();
+        return analyzeOPG(lhs, 0);
+    }
 
+    private SyntaxTreeNode analyzePrimaryExpr() throws SyntacticorError {
+        Token token = getToken();
+        System.out.println("Primary: token " + token.getValue());
+        nextToken();
+        if(token.getTokenType() == TokenType.IDENT){
+            if(!isEND() && getToken().getTokenType() == TokenType.L_PAREN){
+                lastToken();
+                return analyzeCallExpr();
+            }
+            else{
+                SyntaxTreeNode syntaxTreeNode = new SyntaxTreeNode(SyntaxTreeNodeType.IDENT_EXPR);
+                syntaxTreeNode.appendChild(new SyntaxTreeNode(token));
+                return syntaxTreeNode;
+            }
+        }
+        else if(token.getTokenType() == TokenType.L_PAREN){
+            SyntaxTreeNode syntaxTreeNode = new SyntaxTreeNode(SyntaxTreeNodeType.GROUP_EXPR);
+            syntaxTreeNode.appendChild(new SyntaxTreeNode(token));
+            syntaxTreeNode.appendChild(analyzeExpr());
+            if(isEND() || getToken().getTokenType() != TokenType.R_PAREN){
+                throw new SyntacticorError("No ')' in a group_expr.");
+            }
+            syntaxTreeNode.appendChild(new SyntaxTreeNode(getToken()));
+            nextToken();
+            return syntaxTreeNode;
+        }
+        else if(token.getTokenType() == TokenType.MINUS){
+            SyntaxTreeNode syntaxTreeNode = new SyntaxTreeNode(SyntaxTreeNodeType.NEGATE_EXPR);
+            syntaxTreeNode.appendChild(new SyntaxTreeNode(token));
+            syntaxTreeNode.appendChild(analyzePrimaryExpr());
+            return syntaxTreeNode;
+        }
+        else if(token.getTokenType() == TokenType.UINT_LITERAL
+                || token.getTokenType() == TokenType.DOUBLE_LITERAL
+                || token.getTokenType() == TokenType.STRING_LITERAL){
+            SyntaxTreeNode syntaxTreeNode = new SyntaxTreeNode(SyntaxTreeNodeType.LITERAL_EXPR);
+            syntaxTreeNode.appendChild(new SyntaxTreeNode(token));
+            return syntaxTreeNode;
+        }
+        else{
+            throw new SyntacticorError("Identify primary_expr error: token type " + token.getValue());
+        }
+    }
+
+    private SyntaxTreeNode analyzeOPG(SyntaxTreeNode lhs, int priority) throws SyntacticorError {
         if(isEND()){
-            throw new SyntacticorError("Identify expr error.");
+            return lhs;
         }
 
-        SyntaxTreeNode midExpr;
-//        System.out.println("expr token: " + getToken().getValue());
-        switch(getToken().getTokenType()){
-            case MINUS:
-                midExpr = analyzeNegateExpr();
-                break;
-            case IDENT:
-                nextToken();
-                if(isEND()){
-                    lastToken();
-                    midExpr = analyzeIdentExpr();
-                }
-                else if(getToken().getTokenType() == TokenType.ASSIGN){
-                    lastToken();
-                    midExpr = analyzeAssignExpr();
-                }
-                else if(getToken().getTokenType() == TokenType.L_PAREN){
-                    lastToken();
-                    midExpr = analyzeCallExpr();
-                }
-                else{
-                    lastToken();
-                    midExpr = analyzeIdentExpr();
-                }
-                break;
-            case UINT_LITERAL:
-            case DOUBLE_LITERAL:
-            case STRING_LITERAL:
-            case CHAR_LITERAL:
-                midExpr = analyzeLiteralExpr();
-                break;
-            case L_PAREN:
-                midExpr = analyzeGroupExpr();
-                break;
-            default:
-                throw new SyntacticorError("Identify expr error.");
-        }
+        while(getToken().isBinaryOp() && getToken().getPriority() >= priority){
+            Token op = getToken();
+            nextToken();
+            SyntaxTreeNode rhs = analyzePrimaryExpr();
 
-        while(!isEND()
-                && (getToken().getTokenType()==TokenType.AS_KW
-                || getToken().getTokenType()==TokenType.PLUS
-                || getToken().getTokenType()==TokenType.MINUS
-                || getToken().getTokenType()==TokenType.MUL
-                || getToken().getTokenType()==TokenType.DIV
-                || getToken().getTokenType()==TokenType.EQ
-                || getToken().getTokenType()==TokenType.NEQ
-                || getToken().getTokenType()==TokenType.LT
-                || getToken().getTokenType()==TokenType.GT
-                || getToken().getTokenType()==TokenType.LE
-                || getToken().getTokenType()==TokenType.GE)){
-            if(getToken().getTokenType() == TokenType.AS_KW){
-                SyntaxTreeNode asExpr = new SyntaxTreeNode(SyntaxTreeNodeType.AS_EXPR);
+            while(getToken().isBinaryOp()
+                    && getToken().getPriority() > op.getPriority()
+                    || (getToken().isRightAssoc()
+                    && getToken().getPriority() == op.getPriority())){
+                rhs = analyzeOPG(rhs, getToken().getPriority());
+            }
 
-                asExpr.appendChild(midExpr);
-                asExpr.appendChild(new SyntaxTreeNode(getToken()));
-
-                nextToken();
-                if(isEND() || getToken().getTokenType()!=TokenType.IDENT){
-                    throw new SyntacticorError("No ty in a as_expr.");
+            if(op.getTokenType() == TokenType.AS_KW){
+                SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.AS_EXPR);
+                operatorExpr.appendChild(lhs);
+                operatorExpr.appendChild(new SyntaxTreeNode(op));
+                if(rhs.getType() != SyntaxTreeNodeType.IDENT_EXPR){
+                    throw new SyntacticorError("Ty is not a ident in as_expr.");
                 }
-                asExpr.appendChild(new SyntaxTreeNode(getToken()));
-                midExpr = asExpr;
+                operatorExpr.appendChild(rhs.getChildList().get(0));
+                lhs = operatorExpr;
+            }
+            else if(op.getTokenType() == TokenType.ASSIGN){
+                SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.ASSIGN_EXPR);
+                if(lhs.getType() != SyntaxTreeNodeType.IDENT_EXPR){
+                    throw new SyntacticorError("Not a ident in assign_expr left.");
+                }
+                operatorExpr.appendChild(lhs.getChildList().get(0));
+                operatorExpr.appendChild(new SyntaxTreeNode(op));
+                operatorExpr.appendChild(rhs);
+                lhs = operatorExpr;
             }
             else{
                 SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.OPERATOR_EXPR);
-
-                operatorExpr.appendChild(midExpr);
-                operatorExpr.appendChild(new SyntaxTreeNode(getToken()));
-
-                nextToken();
-                operatorExpr.appendChild(analyzeExpr());
-                midExpr = operatorExpr;
+                operatorExpr.appendChild(lhs);
+                operatorExpr.appendChild(new SyntaxTreeNode(op));
+                operatorExpr.appendChild(rhs);
+                lhs = operatorExpr;
             }
         }
-
-        expr.appendChild(midExpr);
-//        System.out.println("expr exit token: " + getToken().getValue());
-        return expr;
+        return lhs;
     }
 
-    private SyntaxTreeNode analyzeNegateExpr() throws SyntacticorError {
-        SyntaxTreeNode negateExpr = new SyntaxTreeNode(SyntaxTreeNodeType.NEGATE_EXPR);
+//    private SyntaxTreeNode analyzeSimpleExpr() throws SyntacticorError {
+//        SyntaxTreeNode expr = new SyntaxTreeNode(SyntaxTreeNodeType.EXPR);
+//
+//        if(isEND()){
+//            throw new SyntacticorError("Identify expr error.");
+//        }
+//
+//        SyntaxTreeNode midExpr;
+////        System.out.println("expr token: " + getToken().getValue());
+//        switch(getToken().getTokenType()){
+////            case MINUS:
+////                midExpr = analyzeNegateExpr();
+////                break;
+//            case IDENT:
+//                nextToken();
+//                if(isEND()){
+//                    lastToken();
+//                    midExpr = analyzeIdentExpr();
+//                }
+//                else if(getToken().getTokenType() == TokenType.ASSIGN){
+//                    lastToken();
+//                    midExpr = analyzeAssignExpr();
+//                }
+//                else if(getToken().getTokenType() == TokenType.L_PAREN){
+//                    lastToken();
+//                    midExpr = analyzeCallExpr();
+//                }
+//                else{
+//                    lastToken();
+//                    midExpr = analyzeIdentExpr();
+//                }
+//                break;
+//            case UINT_LITERAL:
+//            case DOUBLE_LITERAL:
+//            case STRING_LITERAL:
+//            case CHAR_LITERAL:
+//                midExpr = analyzeLiteralExpr();
+//                break;
+//            case L_PAREN:
+//                midExpr = analyzeGroupExpr();
+//                break;
+//            default:
+//                throw new SyntacticorError("Identify expr error.");
+//        }
+//
+////        while(!isEND()
+////                && (getToken().getTokenType()==TokenType.AS_KW
+////                || getToken().getTokenType()==TokenType.PLUS
+////                || getToken().getTokenType()==TokenType.MINUS
+////                || getToken().getTokenType()==TokenType.MUL
+////                || getToken().getTokenType()==TokenType.DIV
+////                || getToken().getTokenType()==TokenType.EQ
+////                || getToken().getTokenType()==TokenType.NEQ
+////                || getToken().getTokenType()==TokenType.LT
+////                || getToken().getTokenType()==TokenType.GT
+////                || getToken().getTokenType()==TokenType.LE
+////                || getToken().getTokenType()==TokenType.GE)){
+////            if(getToken().getTokenType() == TokenType.AS_KW){
+////                SyntaxTreeNode asExpr = new SyntaxTreeNode(SyntaxTreeNodeType.AS_EXPR);
+////
+////                asExpr.appendChild(midExpr);
+////                asExpr.appendChild(new SyntaxTreeNode(getToken()));
+////
+////                nextToken();
+////                if(isEND() || getToken().getTokenType()!=TokenType.IDENT){
+////                    throw new SyntacticorError("No ty in a as_expr.");
+////                }
+////                asExpr.appendChild(new SyntaxTreeNode(getToken()));
+////                midExpr = asExpr;
+////            }
+////            else{
+////                SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.OPERATOR_EXPR);
+////
+////                operatorExpr.appendChild(midExpr);
+////                operatorExpr.appendChild(new SyntaxTreeNode(getToken()));
+////
+////                nextToken();
+////                operatorExpr.appendChild(analyzeExpr());
+////                midExpr = operatorExpr;
+////            }
+////        }
+//
+////        expr.appendChild(midExpr);
+////        System.out.println("expr exit token: " + getToken().getValue());
+//        return midExpr;
+//    }
 
-        if(isEND() || getToken().getTokenType()!=TokenType.MINUS){
-            throw new SyntacticorError("No '-' in a negate_expr.");
-        }
-        negateExpr.appendChild(new SyntaxTreeNode(getToken()));
 
-        nextToken();
 
-        negateExpr.appendChild(analyzeExpr());
-
-        return negateExpr;
-    }
+//    private SyntaxTreeNode analyzeNegateExpr() throws SyntacticorError {
+//        SyntaxTreeNode negateExpr = new SyntaxTreeNode(SyntaxTreeNodeType.NEGATE_EXPR);
+//
+//        if(isEND() || getToken().getTokenType()!=TokenType.MINUS){
+//            throw new SyntacticorError("No '-' in a negate_expr.");
+//        }
+//        negateExpr.appendChild(new SyntaxTreeNode(getToken()));
+//
+//        nextToken();
+//
+//        negateExpr.appendChild(analyzeExpr());
+//
+//        return negateExpr;
+//    }
 
     private SyntaxTreeNode analyzeIdentExpr() throws SyntacticorError {
         SyntaxTreeNode identExpr = new SyntaxTreeNode(SyntaxTreeNodeType.IDENT_EXPR);

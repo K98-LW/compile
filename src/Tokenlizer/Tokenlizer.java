@@ -89,19 +89,19 @@ final public class Tokenlizer {
 						break;
 					case '<':
 						if(this.reader.nextChar().getChar() == '=') {
-							saveToken(new Token(TokenType.LE, ">="));							
+							saveToken(new Token(TokenType.LE, "<="));
 						}
 						else {
-							saveToken(new Token(TokenType.LT, ">"));
+							saveToken(new Token(TokenType.LT, "<"));
 							this.reader.lastChar();
 						}
 						break;
 					case '>':
 						if(this.reader.nextChar().getChar() == '=') {
-							saveToken(new Token(TokenType.GE, "<="));							
+							saveToken(new Token(TokenType.GE, ">="));
 						}
 						else {
-							saveToken(new Token(TokenType.GT, "<"));
+							saveToken(new Token(TokenType.GT, ">"));
 							this.reader.lastChar();
 						}
 						break;
