@@ -52,14 +52,18 @@ class SymbolTable{
                 return true;
             }
         }
-        if(i>=0 && (item=this.list.get(i)).type==SymbolType.FUNCTION){
-            for(SymbolTableItem s : item.getParamList()){
-                if(s.name.equals(name)){
-                    return true;
-                }
-            }
-        }
+//        if(i>=0 && (item=this.list.get(i)).type==SymbolType.FUNCTION){
+//            for(SymbolTableItem s : item.getParamList()){
+//                if(s.name.equals(name)){
+//                    return true;
+//                }
+//            }
+//        }
         return false;
+    }
+
+    public int size(){
+        return this.list.size();
     }
 }
 
@@ -68,14 +72,16 @@ class SymbolTableItem{
     public SymbolType type;
     public int depth;
     public SymbolType returnType;
-    private List<SymbolTableItem> paramList;
+    private List<SymbolType> paramList;
+    private boolean isConst = false;
+    public int location;
 
     public SymbolTableItem(String name, SymbolType type, int depth){
         this.name = name;
         this.type = type;
         this.depth = depth;
         if(this.type == SymbolType.FUNCTION){
-            this.paramList = new ArrayList<SymbolTableItem>();
+            this.paramList = new ArrayList<SymbolType>();
         }
     }
 
@@ -84,26 +90,31 @@ class SymbolTableItem{
         this.returnType = returnType;
     }
 
-    public SymbolTableItem appendParam(SymbolTableItem param) throws SemanticError {
-        if(param == null){
-            throw new SemanticError("Error: param is null.");
-        }
-        else if(param.type==SymbolType.VOID){
-            throw new SemanticError("Error: param type can not be VOID.");
-        }
-        else if(param.type==SymbolType.FUNCTION){
-            throw new SemanticError("Error: param type can not be FUNCTION.");
-        }
-        for(SymbolTableItem s : this.paramList){
-            if(s.name.equals(param.name)){
-                throw new SemanticError("Error: param name can not be same.");
-            }
-        }
-        this.paramList.add(param);
+    public SymbolTableItem setIsConst(){
+        this.isConst = true;
         return this;
     }
 
-    public List<SymbolTableItem> getParamList(){
+    public SymbolTableItem appendParam(SymbolType symbolType) throws SemanticError {
+        if(symbolType == null){
+            throw new SemanticError("Error: param is null.");
+        }
+        else if(symbolType == SymbolType.VOID){
+            throw new SemanticError("Error: param type can not be VOID.");
+        }
+        else if(symbolType == SymbolType.FUNCTION){
+            throw new SemanticError("Error: param type can not be FUNCTION.");
+        }
+//        for(SymbolTableItem s : this.paramList){
+//            if(s.name.equals(param.name)){
+//                throw new SemanticError("Error: param name can not be same.");
+//            }
+//        }
+        this.paramList.add(symbolType);
+        return this;
+    }
+
+    public List<SymbolType> getParamList(){
         return this.paramList;
     }
 }

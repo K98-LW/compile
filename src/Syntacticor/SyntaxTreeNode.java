@@ -93,4 +93,8 @@ public class SyntaxTreeNode {
                 return "unknown";
         }
     }
+
+    public Token getToken(){
+        return this.token;
+    }
 }

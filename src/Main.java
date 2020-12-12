@@ -11,6 +11,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws SyntacticorError {
+//        System.out.println(String.format("%01x", 30));
         Tokenlizer tokenlizer = Tokenlizer.getInstance();
         try{
             tokenlizer.init();
