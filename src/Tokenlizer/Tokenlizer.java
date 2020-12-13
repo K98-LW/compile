@@ -176,33 +176,36 @@ final public class Tokenlizer {
 		if(!isDigit(c)) {
 			throw new TokenlizerError("After point must be a number.");
 		}
-		
-		while(!isBlank(c) && this.reader.isEOF()) {
-			this.tokenValue.append((char)c);
-			this.reader.nextChar();
-			
+
+		while(!isBlank(c) && !this.reader.isEOF()) {
 			if(c == 'e' || c == 'E') {
 				if(eFlag) {
 					throw new TokenlizerError("More than one 'e' in a double.");
 				}
-				
-				if(this.reader.isEOF() || !isDigit(this.reader.getChar())){
+
+				this.tokenValue.append('E');
+				if(this.reader.isEOF() || !isDigit(c = this.reader.nextChar().getChar())){
 					throw new TokenlizerError("After 'E' must be a number.");
 				}
 				
 				eFlag = true;
 			}
 			else if(!isDigit(c)) {
-				throw new TokenlizerError(String.format("Unknown %c in a double.", c));
+//				throw new TokenlizerError(String.format("Unknown %c in a double.", c));
+				break;
 			}
-			
+
+			this.tokenValue.append((char)c);
+			this.reader.nextChar();
+
 			c = this.reader.getChar();
 		}
+
 		saveToken(new Token(TokenType.DOUBLE_LITERAL, this.tokenValue.toString()));
-		
-		if(!this.reader.isEOF()) {
-			this.reader.nextChar();
-		}
+
+//		if(!this.reader.isEOF()) {
+//			this.reader.nextChar();
+//		}
 	}
 	
 	private void wordState() throws TokenlizerError {
