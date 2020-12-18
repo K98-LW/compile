@@ -99,4 +99,10 @@ public class CodeSaver {
 
         return this;
     }
+
+    public void print(){
+        for(String s : this.codeList){
+            System.out.println(s);
+        }
+    }
 }

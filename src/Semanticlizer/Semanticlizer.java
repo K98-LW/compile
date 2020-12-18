@@ -45,7 +45,7 @@ public class Semanticlizer {
         this.finalCode = new CodeSaver();
     }
 
-    public void analyze() throws SemanticError {
+    public CodeSaver analyze() throws SemanticError {
         // _start
         SymbolTableItem _start = new SymbolTableItem(
                 "_start",
@@ -135,13 +135,15 @@ public class Semanticlizer {
 
         // magic
         this.finalCode.appendFront("72303b3e");
+
+        return this.finalCode;
     }
 
     private CodeSaver analyzeFunction(SyntaxTreeNode stn) throws SemanticError {
         CodeSaver functionCode = new CodeSaver();
 
         // 局部变量数量的统计
-        Integer localVariableCount = new Integer(0);
+        Integer localVariableCount = new Integer(1);
 
         // 函数名
         String functionName = stn.getChildList().get(1).getToken().getValue();
@@ -223,7 +225,7 @@ public class Semanticlizer {
         functionCode.append(analyzeBlockStmt(sp));
 
         functionCode.appendFront(functionCode.size(), 4)
-                .appendFront(localVariableCount, 4)
+                .appendFront(localVariableCount-1, 4)
                 .appendFront(paramsCount, 4)
                 .appendFront(returnType==SymbolType.VOID ? 0 : 1, 4)
                 .appendFront(functionSymbol.location, 4);
@@ -464,8 +466,46 @@ public class Semanticlizer {
         return codeSaver;
     }
 
-    private CodeSaver analyzeReturnStmt(StmtParams params){
+    private CodeSaver analyzeReturnStmt(StmtParams params) throws SemanticError {
         CodeSaver codeSaver = new CodeSaver();
+
+        if(params.returnType == SymbolType.VOID){
+            if(params.stn.getChildList().size() != 2){
+                throw new SemanticError("Return void error.");
+            }
+        }
+        else if(params.returnType == SymbolType.INT){
+            codeSaver.append(CodeBuilder.arga(0));
+            StmtParams sp = new StmtParams(params);
+            ExprType exprType = new ExprType();
+            sp.stn = params.stn.getChildList().get(1);
+            if(sp.stn.getType() != SyntaxTreeNodeType.EXPR){
+                throw new SemanticError("Need to return a int.");
+            }
+            codeSaver.append(analyzeExpr(sp, exprType));
+            if(exprType.symbolType != SymbolType.INT){
+                throw new SemanticError("Return value is not a int.");
+            }
+            codeSaver.append(CodeBuilder.store64);
+        }
+        else if(params.returnType == SymbolType.DOUBLE){
+            codeSaver.append(CodeBuilder.arga(0));
+            StmtParams sp = new StmtParams(params);
+            ExprType exprType = new ExprType();
+            sp.stn = params.stn.getChildList().get(1);
+            if(sp.stn.getType() != SyntaxTreeNodeType.EXPR){
+                throw new SemanticError("Need to return a double.");
+            }
+            codeSaver.append(analyzeExpr(sp, exprType));
+            if(exprType.symbolType != SymbolType.DOUBLE){
+                throw new SemanticError("Return value is not a double.");
+            }
+            codeSaver.append(CodeBuilder.store64);
+        }
+        else{
+            throw new SemanticError("Unknown return type.");
+        }
+
         codeSaver.append(CodeBuilder.ret);
         return codeSaver;
     }

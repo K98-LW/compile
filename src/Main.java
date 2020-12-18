@@ -1,3 +1,5 @@
+import Semanticlizer.*;
+import Semanticlizer.Semanticlizer;
 import Syntacticor.Syntacticor;
 import Syntacticor.SyntacticorError;
 import Syntacticor.SyntaxTreeNode;
@@ -10,7 +12,7 @@ import java.util.List;
 //import Tokenlizer.Tokenlizer;
 
 public class Main {
-    public static void main(String[] args) throws SyntacticorError {
+    public static void main(String[] args) throws SyntacticorError, SemanticError {
 //        System.out.println(String.format("%01x", 30));
         Tokenlizer tokenlizer = Tokenlizer.getInstance();
         try{
@@ -37,6 +39,12 @@ public class Main {
         System.out.println("\nSyntacticor complete.\n");
 
         syntacticor.printTree(program, 0);
+
+        Semanticlizer semanticlizer = Semanticlizer.getInstance();
+        semanticlizer.init(program);
+
+        CodeSaver codeSaver = semanticlizer.analyze();
+        codeSaver.print();
 
         return;
     }
