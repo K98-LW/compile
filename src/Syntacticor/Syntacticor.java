@@ -55,7 +55,7 @@ public class Syntacticor {
         SyntaxTreeNode root = new SyntaxTreeNode(SyntaxTreeNodeType.PROGRAM);
         while(!isEND()){
             if(getToken().getTokenType() == TokenType.FN_KW){
-                System.out.println("to Function");
+//                System.out.println("to Function");
                 root.appendChild(analyzeFunction());
             }
             else if(getToken().getTokenType()==TokenType.LET_KW
@@ -430,7 +430,7 @@ public class Syntacticor {
             letDeclStmt.appendChild(analyzeExpr());
         }
 
-        if(isEND()){
+        if(isEND() || getToken().getTokenType() != TokenType.SEMICOLON){
             throw new SyntacticorError("No ';' in a let_decl_stmt.");
         }
         letDeclStmt.appendChild(new SyntaxTreeNode(getToken()));
@@ -490,7 +490,7 @@ public class Syntacticor {
 
     private SyntaxTreeNode analyzePrimaryExpr() throws SyntacticorError {
         Token token = getToken();
-        System.out.println("Primary: token " + token.getValue());
+//        System.out.println("Primary: token " + token.getValue());
         nextToken();
         if(token.getTokenType() == TokenType.IDENT){
             if(!isEND() && getToken().getTokenType() == TokenType.L_PAREN){

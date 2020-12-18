@@ -3,6 +3,7 @@ package Semanticlizer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 class SymbolTable{
     private LinkedList<SymbolTableItem> list;
@@ -62,6 +63,21 @@ class SymbolTable{
         return false;
     }
 
+    public SymbolTableItem find(String name){
+        ListIterator<SymbolTableItem> it = this.list.listIterator(this.list.size());
+        while(it.hasPrevious()){
+            SymbolTableItem symbolTableItem = it.previous();
+            if(symbolTableItem.name.equals(name)){
+                return symbolTableItem;
+            }
+        }
+        return null;
+    }
+
+    public SymbolTableItem get(int index){
+        return this.list.get(index);
+    }
+
     public int size(){
         return this.list.size();
     }
@@ -73,8 +89,9 @@ class SymbolTableItem{
     public int depth;
     public SymbolType returnType;
     private List<SymbolType> paramList;
-    private boolean isConst = false;
+    public boolean isConst = false;
     public int location;
+    public boolean isParam = false;
 
     public SymbolTableItem(String name, SymbolType type, int depth){
         this.name = name;
@@ -92,6 +109,11 @@ class SymbolTableItem{
 
     public SymbolTableItem setIsConst(){
         this.isConst = true;
+        return this;
+    }
+
+    public SymbolTableItem setIsParam(){
+        this.isParam = true;
         return this;
     }
 

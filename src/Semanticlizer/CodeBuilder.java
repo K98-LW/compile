@@ -1,9 +1,14 @@
 package Semanticlizer;
 
-class CodeBuilder {
+final class CodeBuilder {
+    private CodeBuilder() {}
+
     final public static String nop = "00";
     final public static String push(int num){
         return "01" + String.format("%016x", num);
+    }
+    final public static String push(long num){
+        return "01" + String.format("%016lx", num);
     }
     final public static String pop = "03";
     final public static String dup = "04";
@@ -55,7 +60,17 @@ class CodeBuilder {
     final public static String setlt = "39";
     final public static String setgt = "3a";
     final public static String br(int num){
-        return "41" + String.format("%08x", num);
+        if(num >= 0){
+            return "41" + String.format("%08x", num);
+        }
+        else{
+            int a = Integer.MAX_VALUE + num;
+            a += 1;
+            return "41" + String.format("1%07x", a);
+        }
+    }
+    final private static String br(String string){
+        return "41" + string;
     }
     final public static String brfalse(int num){
         return "42" + String.format("%08x", num);
@@ -79,4 +94,8 @@ class CodeBuilder {
     final public static String prints = "57";
     final public static String println = "58";
     final public static String panic = "fe";
+    final public static String breakFlag = "<break>";
+    final public static String continueFlag = "<continue>";
+    final public static String whileStartFlag = "<while start>";
+    final public static String whileEndFlag = "<while end>";
 }
