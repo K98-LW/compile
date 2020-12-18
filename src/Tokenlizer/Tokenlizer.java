@@ -22,8 +22,8 @@ final public class Tokenlizer {
 		return tokenlizer;
 	}
 	
-	public void init() throws IOException {
-		this.reader = Reader.getInstance();
+	public void init(String path) throws IOException {
+		this.reader = Reader.getInstance(path);
 		this.tokenValue = new StringBuilder();
 		this.tokenList = new ArrayList<Token>();
 	}

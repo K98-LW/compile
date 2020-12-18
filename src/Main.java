@@ -18,7 +18,8 @@ public class Main {
 //        System.out.println(String.format("%01x", 30));
         Tokenlizer tokenlizer = Tokenlizer.getInstance();
         try{
-            tokenlizer.init();
+            System.out.println("path: " + args[0]);
+            tokenlizer.init(args[0]);
         } catch (Exception e){
             System.out.println("Init Tokenlizer error.");
         }
@@ -49,7 +50,7 @@ public class Main {
         codeSaver.print();
 
         Writer writer = Writer.getInstance();
-        writer.write(codeSaver);
+        writer.write(codeSaver, args[2]);
 
         return;
     }

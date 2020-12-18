@@ -7,11 +7,12 @@ public class Reader {
 	private int location;
 	private String string;
 	
-	private Reader() throws IOException {
+	private Reader(String path) throws IOException {
 		this.location = 0;
 
 		StringBuilder stringBuilder = new StringBuilder();
-		File file = new File("E:\\compile\\src\\Reader\\code");
+		System.out.println("Reader path: " + path);
+		File file = new File(path);
 //		System.out.println(file.exists());
 		FileInputStream fileInputStream = new FileInputStream(file);
 		BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
@@ -25,10 +26,10 @@ public class Reader {
 //		System.out.println(stringBuilder.toString());
 	}
 	
-	public static Reader getInstance() throws IOException {
+	public static Reader getInstance(String path) throws IOException {
 		if(reader == null) {
 			try {
-				reader = new Reader();
+				reader = new Reader(path);
 			} catch (IOException e){
 				System.out.println("File not found.");
 			} catch(Exception e){
