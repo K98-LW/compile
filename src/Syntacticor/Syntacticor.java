@@ -485,7 +485,8 @@ public class Syntacticor {
 
     private SyntaxTreeNode analyzeExpr() throws SyntacticorError {
         SyntaxTreeNode lhs = analyzePrimaryExpr();
-        return analyzeOPG(lhs, 0);
+        SyntaxTreeNode expr = new SyntaxTreeNode(SyntaxTreeNodeType.EXPR);
+        return expr.appendChild(analyzeOPG(lhs, 0));
     }
 
     private SyntaxTreeNode analyzePrimaryExpr() throws SyntacticorError {

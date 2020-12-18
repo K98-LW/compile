@@ -46,12 +46,13 @@ class SymbolTable{
     }
 
     public boolean hasSameName(String name, int depth){
-        int i = this.list.size();
+        int i = this.list.size() - 1;
         SymbolTableItem item;
         while(i>=0 && (item=this.list.get(i)).depth==depth){
             if(item.name.equals(name)){
                 return true;
             }
+            i--;
         }
 //        if(i>=0 && (item=this.list.get(i)).type==SymbolType.FUNCTION){
 //            for(SymbolTableItem s : item.getParamList()){
