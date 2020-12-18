@@ -1,3 +1,10 @@
 fn main() -> int {
-    return 1;
+    let i:int;
+    let j:int;
+    if i<1{
+        i;
+    }
+    else{
+
+    }
 }

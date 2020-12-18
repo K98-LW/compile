@@ -52,6 +52,7 @@ public class Semanticlizer {
                 SymbolType.FUNCTION,
                 0
         );
+        _start.setIsConst();
         this.globalSymbolTable.addSymbol(_start);
 
         CodeSaver _startCode = new CodeSaver();
@@ -71,9 +72,11 @@ public class Semanticlizer {
         // build _start function
         // find main
         int main_loc = -1;
+        SymbolType mainRT = SymbolType.VOID;
         for(int i=0; i<this.globalSymbolTable.size(); i++){
             if(this.globalSymbolTable.get(i).name.equals("main")){
                 main_loc = i;
+                mainRT = this.globalSymbolTable.get(i).returnType;
                 break;
             }
         }
@@ -81,6 +84,9 @@ public class Semanticlizer {
             throw new SemanticError("Can not find function main.");
         }
         // call main function
+        if(mainRT != SymbolType.VOID){
+            _startCode.append(CodeBuilder.stackalloc(1));
+        }
         _startCode.append(CodeBuilder.call(main_loc));
         // append to finalCode
         this.finalCode.appendFront(_startCode);
@@ -136,14 +142,26 @@ public class Semanticlizer {
         // magic
         this.finalCode.appendFront("72303b3e");
 
+        this.finalCode.replaceLabel();
+
         return this.finalCode;
+    }
+
+    private class Counter{
+        int count = 0;
+
+        public Counter add(){
+            this.count++;
+            return this;
+        }
     }
 
     private CodeSaver analyzeFunction(SyntaxTreeNode stn) throws SemanticError {
         CodeSaver functionCode = new CodeSaver();
 
         // 局部变量数量的统计
-        Integer localVariableCount = new Integer(1);
+        Counter localVariableCount = new Counter();
+        localVariableCount.add();
 
         // 函数名
         String functionName = stn.getChildList().get(1).getToken().getValue();
@@ -225,7 +243,7 @@ public class Semanticlizer {
         functionCode.append(analyzeBlockStmt(sp));
 
         functionCode.appendFront(functionCode.size(), 4)
-                .appendFront(localVariableCount-1, 4)
+                .appendFront(localVariableCount.count-1, 4)
                 .appendFront(paramsCount, 4)
                 .appendFront(returnType==SymbolType.VOID ? 0 : 1, 4)
                 .appendFront(functionSymbol.location, 4);
@@ -248,7 +266,7 @@ public class Semanticlizer {
     private CodeSaver analyzeGlobalDeclStmt(SyntaxTreeNode stn) throws SemanticError {
         StmtParams sp = new StmtParams();
         sp.stn = stn;
-        sp.localVariableCount = 0;
+        sp.localVariableCount.count = 0;
         sp.depth = 0;
         return analyzeDeclStmt(sp);
     }
@@ -276,15 +294,21 @@ public class Semanticlizer {
         if(declStmt.getChildList().size() == 7){
             StmtParams sp = new StmtParams(params);
             sp.stn = declStmt.getChildList().get(5);
-            declStmtCode.append(analyzeExpr(sp));
+            ExprType exprType = new ExprType();
+            declStmtCode.append(analyzeExpr(sp, exprType));
+
+            if(exprType.symbolType != varType){
+                throw new SemanticError("decl_stmt type error.");
+            }
 
             // 添加赋值代码
             if(params.depth == 0){
                 declStmtCode.appendFront(CodeBuilder.globa(this.globalSymbolTable.size()));
             }
             else{
-                declStmtCode.appendFront(CodeBuilder.loca(params.localVariableCount));
+                declStmtCode.appendFront(CodeBuilder.loca(params.localVariableCount.count));
             }
+            declStmtCode.append(CodeBuilder.store64);
         }
 
         // 定位该变量，
@@ -294,9 +318,8 @@ public class Semanticlizer {
         }
         else{
             // 局部变量取决于调用者
-            symbolTableItem.location = params.localVariableCount;
+            symbolTableItem.location = params.localVariableCount.count;
         }
-        declStmtCode.append(CodeBuilder.store64);
 
         // 加入符号表
         symbolTable.addSymbol(symbolTableItem);
@@ -306,7 +329,7 @@ public class Semanticlizer {
 
     private class StmtParams{
         public SyntaxTreeNode stn = null;
-        public Integer localVariableCount = 0;
+        public Counter localVariableCount = null;
 //        public int localVariableStart;
         public int depth = 0;
         public SymbolType returnType = null;
@@ -330,21 +353,23 @@ public class Semanticlizer {
             sp.stn = params.stn.getChildList().get(i);
             blockCode.append(analyzeStmt(sp));
         }
+        this.localSymbolTable.print();
         this.localSymbolTable.pop(params.depth);
+        System.out.println("pop(" + params.depth + ")");
+        this.localSymbolTable.print();
         return blockCode;
     }
 
     private CodeSaver analyzeStmt(StmtParams params) throws SemanticError {
         StmtParams sp = new StmtParams(params);
         sp.stn = params.stn.getChildList().get(0);
-        System.out.println(params.stn.getType());
         switch(params.stn.getChildList().get(0).getType()){
             case EXPR_STMT:
                 sp.stn = sp.stn.getChildList().get(0);
                 return analyzeExpr(sp);
             case DECL_STMT:
                 CodeSaver res = analyzeDeclStmt(sp);
-                sp.localVariableCount++;
+                sp.localVariableCount.add();
                 return res;
             case IF_STMT:
                 return analyzeIfStmt(sp);
@@ -375,7 +400,8 @@ public class Semanticlizer {
         int i = 0;
         while(params.stn.getChildList().get(i).getToken().getTokenType() == TokenType.IF_KW ||
                 (params.stn.getChildList().get(i).getToken().getTokenType() == TokenType.ELSE_KW
-                        && params.stn.getChildList().get(i).getToken().getTokenType() == TokenType.IF_KW)){
+                        && params.stn.getChildList().get(i+1).getToken() != null
+                        && params.stn.getChildList().get(i+1).getToken().getTokenType() == TokenType.IF_KW)){
             if(params.stn.getChildList().get(i).getToken().getTokenType() == TokenType.IF_KW ){
                 StmtParams sp = new StmtParams(params);
                 sp.stn = params.stn.getChildList().get(i+1);
@@ -528,6 +554,7 @@ public class Semanticlizer {
     private CodeSaver analyzeExpr(StmtParams params, ExprType exprType) throws SemanticError {
         StmtParams sp = new StmtParams(params);
         sp.stn = params.stn.getChildList().get(0);
+        System.out.println(params.stn.getChildList().get(0).getType());
         switch(params.stn.getChildList().get(0).getType()){
             case OPERATOR_EXPR:
                 return analyzeOperatorExpr(sp, exprType);
@@ -645,6 +672,7 @@ public class Semanticlizer {
 
         StmtParams sp = new StmtParams(params);
         sp.stn = params.stn.getChildList().get(1);
+//        System.out.println(params.stn.getChildList().get(1).getType());
         codeSaver.append(analyzeExpr(sp, exprType));
 
         if(exprType.symbolType == SymbolType.INT){
@@ -689,6 +717,8 @@ public class Semanticlizer {
         // 处理表达式
         StmtParams sp = new StmtParams(params);
         sp.stn = expr;
+        System.out.println(111);
+        System.out.println(sp.stn.getType());
         codeSaver.append(analyzeExpr(sp, exprType2));
 
         // 验证类型是否是相等的
@@ -914,7 +944,7 @@ public class Semanticlizer {
     private CodeSaver analyzeIdentExpr(StmtParams params, ExprType exprType) throws SemanticError {
         CodeSaver codeSaver = new CodeSaver();
         SymbolTableItem var;
-        String varName = params.stn.getToken().getValue();
+        String varName = params.stn.getChildList().get(0).getToken().getValue();
         var = this.localSymbolTable.find(varName);
         if(var != null){
             if(var.isParam){

@@ -14,10 +14,10 @@ public class CodeSaver {
         this.count = 0;
     }
 
-    public String getCode(){
+    public String toString(){
         StringBuilder code = new StringBuilder();
         for(String s : this.codeList){
-            code.append(s);
+            code.append(s+"\n");
         }
         return code.toString();
     }

@@ -32,18 +32,14 @@ class SymbolTable{
         return this.list.pop();
     }
 
-    public List<SymbolTableItem> pop(int depth){
-        ArrayList<SymbolTableItem> popList = new ArrayList<SymbolTableItem>();
-        while(!this.list.isEmpty()){
-            SymbolTableItem item = this.list.pop();
-            if(item.depth < depth){
-                this.list.add(item);
+    public void pop(int depth){
+        for(int i=this.list.size()-1; i>=0; i--){
+            if(this.list.get(i).depth < depth){
                 break;
             }
-            popList.add(item);
+            this.list.pollLast();
         }
-        return popList;
-    }
+}
 
     public boolean hasSameName(String name, int depth){
         int i = this.list.size() - 1;
@@ -81,6 +77,14 @@ class SymbolTable{
 
     public int size(){
         return this.list.size();
+    }
+
+    public void print(){
+        System.out.println("==============================");
+        for(SymbolTableItem sti : this.list){
+            System.out.println("("+sti.type+")\t"+sti.name+"\t:"+sti.depth);
+        }
+        System.out.println("==============================");
     }
 }
 

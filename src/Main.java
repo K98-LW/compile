@@ -6,13 +6,15 @@ import Syntacticor.SyntaxTreeNode;
 import Tokenlizer.Token;
 import Tokenlizer.Tokenlizer;
 import Tokenlizer.TokenlizerError;
+import Writer.Writer;
 
+import java.io.IOException;
 import java.util.List;
 
 //import Tokenlizer.Tokenlizer;
 
 public class Main {
-    public static void main(String[] args) throws SyntacticorError, SemanticError {
+    public static void main(String[] args) throws SyntacticorError, SemanticError, IOException {
 //        System.out.println(String.format("%01x", 30));
         Tokenlizer tokenlizer = Tokenlizer.getInstance();
         try{
@@ -45,6 +47,9 @@ public class Main {
 
         CodeSaver codeSaver = semanticlizer.analyze();
         codeSaver.print();
+
+        Writer writer = Writer.getInstance();
+        writer.write(codeSaver);
 
         return;
     }

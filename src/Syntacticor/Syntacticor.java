@@ -304,6 +304,7 @@ public class Syntacticor {
         }
         breakStmt.appendChild(new SyntaxTreeNode(getToken()));
 
+        nextToken();
         return breakStmt;
     }
 
@@ -321,6 +322,7 @@ public class Syntacticor {
         }
         continueStmt.appendChild(new SyntaxTreeNode(getToken()));
 
+        nextToken();
         return continueStmt;
     }
 
@@ -518,7 +520,7 @@ public class Syntacticor {
         else if(token.getTokenType() == TokenType.MINUS){
             SyntaxTreeNode syntaxTreeNode = new SyntaxTreeNode(SyntaxTreeNodeType.NEGATE_EXPR);
             syntaxTreeNode.appendChild(new SyntaxTreeNode(token));
-            syntaxTreeNode.appendChild(analyzePrimaryExpr());
+            syntaxTreeNode.appendChild(analyzeExpr());
             return syntaxTreeNode;
         }
         else if(token.getTokenType() == TokenType.UINT_LITERAL
@@ -551,30 +553,30 @@ public class Syntacticor {
             }
 
             if(op.getTokenType() == TokenType.AS_KW){
-                SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.AS_EXPR);
-                operatorExpr.appendChild(lhs);
-                operatorExpr.appendChild(new SyntaxTreeNode(op));
+                SyntaxTreeNode asExpr = new SyntaxTreeNode(SyntaxTreeNodeType.AS_EXPR);
+                asExpr.appendChild(new SyntaxTreeNode(SyntaxTreeNodeType.EXPR).appendChild(lhs));
+                asExpr.appendChild(new SyntaxTreeNode(op));
                 if(rhs.getType() != SyntaxTreeNodeType.IDENT_EXPR){
                     throw new SyntacticorError("Ty is not a ident in as_expr.");
                 }
-                operatorExpr.appendChild(rhs.getChildList().get(0));
-                lhs = operatorExpr;
+                asExpr.appendChild(rhs.getChildList().get(0));
+                lhs = asExpr;
             }
             else if(op.getTokenType() == TokenType.ASSIGN){
-                SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.ASSIGN_EXPR);
+                SyntaxTreeNode assignExpr = new SyntaxTreeNode(SyntaxTreeNodeType.ASSIGN_EXPR);
                 if(lhs.getType() != SyntaxTreeNodeType.IDENT_EXPR){
                     throw new SyntacticorError("Not a ident in assign_expr left.");
                 }
-                operatorExpr.appendChild(lhs.getChildList().get(0));
-                operatorExpr.appendChild(new SyntaxTreeNode(op));
-                operatorExpr.appendChild(rhs);
-                lhs = operatorExpr;
+                assignExpr.appendChild(lhs.getChildList().get(0));
+                assignExpr.appendChild(new SyntaxTreeNode(op));
+                assignExpr.appendChild(new SyntaxTreeNode(SyntaxTreeNodeType.EXPR).appendChild(rhs));
+                lhs = assignExpr;
             }
             else{
                 SyntaxTreeNode operatorExpr = new SyntaxTreeNode(SyntaxTreeNodeType.OPERATOR_EXPR);
-                operatorExpr.appendChild(lhs);
+                operatorExpr.appendChild(new SyntaxTreeNode(SyntaxTreeNodeType.EXPR).appendChild(lhs));
                 operatorExpr.appendChild(new SyntaxTreeNode(op));
-                operatorExpr.appendChild(rhs);
+                operatorExpr.appendChild(new SyntaxTreeNode(SyntaxTreeNodeType.EXPR).appendChild(rhs));
                 lhs = operatorExpr;
             }
         }
