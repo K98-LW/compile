@@ -87,7 +87,7 @@ public class Semanticlizer {
         if(mainRT != SymbolType.VOID){
             _startCode.append(CodeBuilder.stackalloc(1));
         }
-        _startCode.append(CodeBuilder.call(main_loc));
+        _startCode.append(CodeBuilder.call(getFunctionId("main")));
         // append to finalCode
         this.finalCode.appendFront(_startCode);
         this.finalCode.appendFront(_startCode.size(), 4);
@@ -837,9 +837,22 @@ public class Semanticlizer {
             }
         }
 
-        codeSaver.append(CodeBuilder.call(function.location));
+        codeSaver.append(CodeBuilder.call(getFunctionId(functionName)));
 
         return codeSaver;
+    }
+
+    private int getFunctionId(String name) throws SemanticError {
+        int i = 0;
+        for(int j=0; j<this.globalSymbolTable.size(); j++){
+            if(this.globalSymbolTable.get(j).type == SymbolType.FUNCTION && name.equals(this.globalSymbolTable.get(j).name)){
+                return i;
+            }
+            else if(this.globalSymbolTable.get(j).type == SymbolType.FUNCTION){
+                i++;
+            }
+        }
+        throw new SemanticError("Can not find the function.");
     }
 
     private CodeSaver callStdFunction(String functionName, StmtParams params, ExprType exprType) throws SemanticError {
