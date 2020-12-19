@@ -486,7 +486,7 @@ public class Semanticlizer {
         codeSaver.append(CodeBuilder.brtrue(1));
         codeSaver.append(CodeBuilder.br(content.size() + 1));
         codeSaver.append(content);
-        codeSaver.append(CodeBuilder.br(-(compare.size() + 2 + content.size())));
+        codeSaver.append(CodeBuilder.br(-(compare.size() + 3 + content.size())));
 
         codeSaver.appendFront(CodeBuilder.whileStartFlag);
         codeSaver.append(CodeBuilder.whileEndFlag);
@@ -653,6 +653,7 @@ public class Semanticlizer {
                 else{
                     codeSaver.append(CodeBuilder.cmpf);
                 }
+                exprType.symbolType = SymbolType.INT;
                 break;
             default:
                 throw new SemanticError("Oparator error.");
