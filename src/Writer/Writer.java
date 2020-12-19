@@ -19,8 +19,12 @@ public class Writer {
 
     public void write(CodeSaver codeSaver, String path) throws IOException {
         File file = new File(path);
-        FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(codeSaver.toString());
-        fileWriter.close();
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        String code = codeSaver.toString();
+        for(int i=0; i<code.length(); i+=2){
+            System.out.println(Integer.valueOf(code.substring(i, i+2), 16));
+            fileOutputStream.write(Integer.valueOf(code.substring(i, i+2), 16));
+        }
+        fileOutputStream.close();
     }
 }

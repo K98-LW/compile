@@ -17,7 +17,7 @@ public class CodeSaver {
     public String toString(){
         StringBuilder code = new StringBuilder();
         for(String s : this.codeList){
-            code.append(s+"\n");
+            code.append(s);
         }
         return code.toString();
     }
