@@ -22,8 +22,17 @@ public class Reader {
 		bufferedInputStream.close();
 		fileInputStream.close();
 
+		// output
+		file = new File(path);
+		fileInputStream = new FileInputStream(file);
+		bufferedInputStream = new BufferedInputStream(fileInputStream);
+		while(bufferedInputStream.available() > 0){
+			System.out.print((char)bufferedInputStream.read());
+		}
+		bufferedInputStream.close();
+		fileInputStream.close();
+
 		this.string = stringBuilder.toString();
-//		System.out.println(stringBuilder.toString());
 	}
 	
 	public static Reader getInstance(String path) throws IOException {
