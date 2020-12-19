@@ -38,7 +38,7 @@ public class Main {
         semanticlizer.init(program);
 
         CodeSaver codeSaver = semanticlizer.analyze();
-        codeSaver.print();
+//        codeSaver.print();
 
         Writer writer = Writer.getInstance();
         writer.write(codeSaver, args[2]);

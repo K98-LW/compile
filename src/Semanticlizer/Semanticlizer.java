@@ -183,6 +183,7 @@ public class Semanticlizer {
         }
 
         int paramsCount = 0;
+        int argOffset = returnType==SymbolType.VOID ? 0 : 1;
         SyntaxTreeNode params = stn.getChildList().get(3);
         LinkedList<SymbolType> types = new LinkedList<SymbolType>();
         if(params.getType() == SyntaxTreeNodeType.FUNCTION_PARAM_LIST){
@@ -201,7 +202,7 @@ public class Semanticlizer {
                 }
                 // 变量名的查重
                 p = paramsList.get(i).getChildList().get(j);
-                System.out.println(p.getType());
+//                System.out.println(p.getType());
                 if(this.localSymbolTable.hasSameName(p.getToken().getValue(), 1)){
                     throw new SemanticError("Duplicate param " + p.getToken().getValue());
                 }
@@ -214,7 +215,7 @@ public class Semanticlizer {
                 if(constFlag){
                     symbolTableItem.setIsConst();
                 }
-                symbolTableItem.location = ++paramsCount;
+                symbolTableItem.location = paramsCount++ + argOffset;
                 symbolTableItem.setIsParam();
                 this.localSymbolTable.addSymbol(symbolTableItem);
             }
@@ -364,10 +365,10 @@ public class Semanticlizer {
             sp.stn = params.stn.getChildList().get(i);
             blockCode.append(analyzeStmt(sp));
         }
-        this.localSymbolTable.print();
+//        this.localSymbolTable.print();
         this.localSymbolTable.pop(params.depth);
-        System.out.println("pop(" + params.depth + ")");
-        this.localSymbolTable.print();
+//        System.out.println("pop(" + params.depth + ")");
+//        this.localSymbolTable.print();
         return blockCode;
     }
 
@@ -525,7 +526,7 @@ public class Semanticlizer {
             StmtParams sp = new StmtParams(params);
             ExprType exprType = new ExprType();
             sp.stn = params.stn.getChildList().get(1);
-            System.out.println(sp.stn.getType());
+//            System.out.println(sp.stn.getType());
             if(sp.stn.getType() != SyntaxTreeNodeType.EXPR){
                 throw new SemanticError("Need to return a int.");
             }
@@ -568,7 +569,7 @@ public class Semanticlizer {
     private CodeSaver analyzeExpr(StmtParams params, ExprType exprType) throws SemanticError {
         StmtParams sp = new StmtParams(params);
         sp.stn = params.stn.getChildList().get(0);
-        System.out.println(params.stn.getChildList().get(0).getType());
+//        System.out.println(params.stn.getChildList().get(0).getType());
         switch(params.stn.getChildList().get(0).getType()){
             case OPERATOR_EXPR:
                 return analyzeOperatorExpr(sp, exprType);
@@ -732,8 +733,8 @@ public class Semanticlizer {
         // 处理表达式
         StmtParams sp = new StmtParams(params);
         sp.stn = expr;
-        System.out.println(111);
-        System.out.println(sp.stn.getType());
+//        System.out.println(111);
+//        System.out.println(sp.stn.getType());
         codeSaver.append(analyzeExpr(sp, exprType2));
 
         // 验证类型是否是相等的
