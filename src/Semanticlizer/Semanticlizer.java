@@ -127,6 +127,14 @@ public class Semanticlizer {
                 }
                 global.append(value.toString());
             }
+            else if(sti.type == SymbolType.STRING){
+                global.append(sti.strValue.length(), 4);
+                StringBuilder value = new StringBuilder();
+                for(int j=0; j<sti.strValue.length(); j++){
+                    value.append(String.format("%02x", (int)sti.strValue.charAt(j)));
+                }
+                global.append(value.toString());
+            }
             else{
                 throw new SemanticError("Global error.");
             }
@@ -161,7 +169,6 @@ public class Semanticlizer {
 
         // 局部变量数量的统计
         Counter localVariableCount = new Counter();
-        localVariableCount.add();
 
         // 函数名
         String functionName = stn.getChildList().get(1).getToken().getValue();
@@ -180,35 +187,36 @@ public class Semanticlizer {
         LinkedList<SymbolType> types = new LinkedList<SymbolType>();
         if(params.getType() == SyntaxTreeNodeType.FUNCTION_PARAM_LIST){
             List<SyntaxTreeNode> paramsList = params.getChildList();
-            boolean constFlag = false;
             for(int i=0; i<paramsList.size(); i++){
-                SyntaxTreeNode p = paramsList.get(i);
+                if(paramsList.get(i).getType() != SyntaxTreeNodeType.FUNCTION_PARAM){
+                    continue;
+                }
+                int j = 0;
+                boolean constFlag = false;
+                SyntaxTreeNode p = paramsList.get(i).getChildList().get(j);
+                // 常量定义标志
+                if(p.getToken().getTokenType() == TokenType.CONST_KW){
+                    constFlag = true;
+                    j++;
+                }
                 // 变量名的查重
-                if(p.getToken().getTokenType() == TokenType.IDENT
-                        && this.localSymbolTable.hasSameName(p.getToken().getValue(), 1)){
+                p = paramsList.get(i).getChildList().get(j);
+                System.out.println(p.getType());
+                if(this.localSymbolTable.hasSameName(p.getToken().getValue(), 1)){
                     throw new SemanticError("Duplicate param " + p.getToken().getValue());
                 }
-                // 常量定义标志
-                else if(p.getToken().getTokenType() == TokenType.CONST_KW){
-                    constFlag = true;
-                }
                 // 参数名加入
-                else if(p.getToken().getTokenType() == TokenType.IDENT){
-                    paramsCount++;
-                    i += 2;
-                    SymbolTableItem symbolTableItem = new SymbolTableItem(
-                                                            p.getToken().getValue(),
-                                                            analyzeTy(paramsList.get(i).getToken().getValue()),
-                                                            1);
-                    types.add(analyzeTy(paramsList.get(i).getToken().getValue()));
-                    if(constFlag){
-                        symbolTableItem.setIsConst();
-                    }
-                    symbolTableItem.location = paramsCount - 1;
-                    symbolTableItem.setIsParam();
-                    this.localSymbolTable.addSymbol(symbolTableItem);
+                SymbolTableItem symbolTableItem = new SymbolTableItem(
+                                                        p.getToken().getValue(),
+                                                        analyzeTy(paramsList.get(i).getChildList().get(j+2).getToken().getValue()),
+                                                        1);
+                types.add(analyzeTy(paramsList.get(i).getChildList().get(j+2).getToken().getValue()));
+                if(constFlag){
+                    symbolTableItem.setIsConst();
                 }
-                constFlag = false;
+                symbolTableItem.location = ++paramsCount;
+                symbolTableItem.setIsParam();
+                this.localSymbolTable.addSymbol(symbolTableItem);
             }
         }
 
@@ -243,7 +251,7 @@ public class Semanticlizer {
         functionCode.append(analyzeBlockStmt(sp));
 
         functionCode.appendFront(functionCode.size()+1, 4)
-                .appendFront(localVariableCount.count-1, 4)
+                .appendFront(localVariableCount.count, 4)
                 .appendFront(paramsCount, 4)
                 .appendFront(returnType==SymbolType.VOID ? 0 : 1, 4)
                 .appendFront(functionSymbol.location, 4);
@@ -330,13 +338,15 @@ public class Semanticlizer {
 
     private class StmtParams{
         public SyntaxTreeNode stn = null;
-        public Counter localVariableCount = null;
+        public Counter localVariableCount;
 //        public int localVariableStart;
         public int depth = 0;
         public SymbolType returnType = null;
         public boolean isInWhile = false;
 
-        public StmtParams(){}
+        public StmtParams(){
+            this.localVariableCount = new Counter();
+        }
 
         public StmtParams(StmtParams sp){
             this.stn = sp.stn;
@@ -420,6 +430,9 @@ public class Semanticlizer {
                 sp.depth += 1;
                 content.add(analyzeBlockStmt(sp));
                 i += 4;
+            }
+            if(i >= params.stn.getChildList().size()){
+                break;
             }
         }
 
@@ -918,15 +931,24 @@ public class Semanticlizer {
         switch(params.stn.getChildList().get(0).getToken().getTokenType()){
             case UINT_LITERAL:
                 exprType.symbolType = SymbolType.INT;
-                codeSaver.append(CodeBuilder.push(new Integer(params.stn.getChildList().get(0).getToken().getValue())));
+                codeSaver.append(CodeBuilder.push(new Long(params.stn.getChildList().get(0).getToken().getValue())));
                 break;
             case DOUBLE_LITERAL:
                 exprType.symbolType = SymbolType.DOUBLE;
                 codeSaver.append(CodeBuilder.push(transDouble(new Double(params.stn.getChildList().get(0).getToken().getValue()))));
                 break;
             case STRING_LITERAL:
-                System.out.println("What shold I do? ");
+                SymbolTableItem str = new SymbolTableItem(
+                        "_string" + this.globalSymbolTable.size(),
+                        SymbolType.STRING,
+                        0
+                );
+                str.setIsConst();
+                str.location = this.globalSymbolTable.size();
+                str.strValue = params.stn.getChildList().get(0).getToken().getValue();
+                this.globalSymbolTable.addSymbol(str);
                 exprType.symbolType = SymbolType.INT;
+                codeSaver.append(CodeBuilder.push(str.location));
                 break;
             case CHAR_LITERAL:
                 exprType.symbolType = SymbolType.INT;
@@ -972,6 +994,6 @@ public class Semanticlizer {
     private CodeSaver analyzeGroupExpr(StmtParams params, ExprType exprType) throws SemanticError {
         StmtParams sp = new StmtParams(params);
         sp.stn = params.stn.getChildList().get(1);
-        return analyzeExpr(params, exprType);
+        return analyzeExpr(sp, exprType);
     }
 }

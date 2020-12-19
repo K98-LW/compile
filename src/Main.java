@@ -14,22 +14,13 @@ import java.util.List;
 //import Tokenlizer.Tokenlizer;
 
 public class Main {
-    public static void main(String[] args) throws SyntacticorError, SemanticError, IOException {
-//        System.out.println(String.format("%01x", 30));
+    public static void main(String[] args) throws SyntacticorError, SemanticError, IOException, TokenlizerError {
         Tokenlizer tokenlizer = Tokenlizer.getInstance();
-        try{
-            System.out.println("path: " + args[0]);
-            tokenlizer.init(args[0]);
-        } catch (Exception e){
-            System.out.println("Init Tokenlizer error.");
-        }
+        System.out.println("path: " + args[0]);
+        tokenlizer.init(args[0]);
 
         List<Token> tokenList;
-        try {
-            tokenList = tokenlizer.analyze();
-        } catch (TokenlizerError tokenlizerError) {
-            return;
-        }
+        tokenList = tokenlizer.analyze();
 
         for(Token t : tokenList){
             System.out.println("Type: " + t.getTokenType() + "\t\tValue: " + t.getValue());

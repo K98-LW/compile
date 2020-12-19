@@ -97,6 +97,7 @@ class SymbolTableItem{
     public boolean isConst = false;
     public int location;
     public boolean isParam = false;
+    public String strValue;
 
     public SymbolTableItem(String name, SymbolType type, int depth){
         this.name = name;
@@ -151,4 +152,5 @@ enum SymbolType{
     INT,
     DOUBLE,
     FUNCTION,
+    STRING,
 }

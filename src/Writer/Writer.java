@@ -21,8 +21,9 @@ public class Writer {
         File file = new File(path);
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         String code = codeSaver.toString();
+        System.out.println("Code length: " + code.length());
         for(int i=0; i<code.length(); i+=2){
-            System.out.println(Integer.valueOf(code.substring(i, i+2), 16));
+//            System.out.println(Integer.valueOf(code.substring(i, i+2), 16));
             fileOutputStream.write(Integer.valueOf(code.substring(i, i+2), 16));
         }
         fileOutputStream.close();

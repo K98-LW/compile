@@ -145,8 +145,9 @@ public class Syntacticor {
         }
         functionParamList.appendChild(analyzeFunctionParam());
 
-        while(isEND() || getToken().getTokenType() == TokenType.COMMA){
+        while(!isEND() && getToken().getTokenType() == TokenType.COMMA){
             functionParamList.appendChild(new SyntaxTreeNode(getToken()));
+            nextToken();
             functionParamList.appendChild(analyzeFunctionParam());
         }
         return functionParamList;
@@ -154,6 +155,7 @@ public class Syntacticor {
 
     private SyntaxTreeNode analyzeFunctionParam() throws SyntacticorError {
         SyntaxTreeNode functionParam = new SyntaxTreeNode(SyntaxTreeNodeType.FUNCTION_PARAM);
+        System.out.println(getToken().getTokenType());
 
         if(isEND()){
             throw new SyntacticorError("Identify function_param error.");
@@ -164,7 +166,7 @@ public class Syntacticor {
         }
 
         if(isEND() || getToken().getTokenType()!=TokenType.IDENT){
-            throw new SyntacticorError("No IDENT in a function_param.");
+            throw new SyntacticorError("No IDENT in a function_param." + "(" + getToken().getTokenType() + ")");
         }
         functionParam.appendChild(new SyntaxTreeNode(getToken()));
 
@@ -525,6 +527,7 @@ public class Syntacticor {
         }
         else if(token.getTokenType() == TokenType.UINT_LITERAL
                 || token.getTokenType() == TokenType.DOUBLE_LITERAL
+                || token.getTokenType() == TokenType.CHAR_LITERAL
                 || token.getTokenType() == TokenType.STRING_LITERAL){
             SyntaxTreeNode syntaxTreeNode = new SyntaxTreeNode(SyntaxTreeNodeType.LITERAL_EXPR);
             syntaxTreeNode.appendChild(new SyntaxTreeNode(token));
@@ -742,7 +745,7 @@ public class Syntacticor {
         }
 
         if(isEND() || getToken().getTokenType()!=TokenType.R_PAREN){
-            throw new SyntacticorError("No ')' in a call_expr.");
+            throw new SyntacticorError("No ')' in a call_expr." + "(" + getToken().getTokenType() + ")");
         }
         callExpr.appendChild(new SyntaxTreeNode(getToken()));
 

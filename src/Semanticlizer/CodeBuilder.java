@@ -8,7 +8,7 @@ final class CodeBuilder {
         return "01" + String.format("%016x", num);
     }
     final public static String push(long num){
-        return "01" + String.format("%016lx", num);
+        return "01" + String.format("%016x", num);
     }
     final public static String pop = "03";
     final public static String dup = "04";
@@ -64,9 +64,9 @@ final class CodeBuilder {
             return "41" + String.format("%08x", num);
         }
         else{
-            int a = Integer.MAX_VALUE + num;
+            long a = Integer.MAX_VALUE + num;
             a += 1;
-            return "41" + String.format("1%07x", a);
+            return "41" + String.format("%08x", a+((long)1<<31));
         }
     }
     final private static String br(String string){

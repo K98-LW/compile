@@ -133,7 +133,7 @@ final public class Tokenlizer {
 						stringState();
 						break;
 					default:
-						throw new TokenlizerError("Unknown char.");						
+						throw new TokenlizerError("Unknown char." + "(" + (char)c + ")");
 				}
 				this.reader.nextChar();
 			}
@@ -184,7 +184,10 @@ final public class Tokenlizer {
 				}
 
 				this.tokenValue.append('E');
-				if(this.reader.isEOF() || !isDigit(c = this.reader.nextChar().getChar())){
+				if(this.reader.isEOF()
+						|| (!isDigit(c = this.reader.nextChar().getChar())
+						&& c != '+'
+						&& c != '-')){
 					throw new TokenlizerError("After 'E' must be a number.");
 				}
 				
@@ -285,11 +288,11 @@ final public class Tokenlizer {
 		}
 		
 		saveToken(new Token(TokenType.CHAR_LITERAL, this.tokenValue.toString()));
-		this.reader.nextChar();
+//		this.reader.nextChar();
 	}
 	
 	private char getEscapeChar() throws TokenlizerError {
-		int c = this.reader.nextChar().getChar();
+		int c = this.reader.getChar();
 		
 		if(this.reader.isEOF()) {
 			throw new TokenlizerError("Unexcpeted end of a char.");
@@ -324,6 +327,7 @@ final public class Tokenlizer {
 			
 			if(c == '\\') {
 				this.reader.nextChar();
+				System.out.println("char: " + (char)this.reader.getChar());
 				this.tokenValue.append(getEscapeChar());
 			}
 			else {
@@ -339,12 +343,15 @@ final public class Tokenlizer {
 	}
 	
 	private void commentState() {
+//		System.out.println("In comment.");
 		while(!this.reader.isEOF() && this.reader.getChar() != '\n') {
+//			System.out.println("comment: " + (char)this.reader.getChar());
 			this.reader.nextChar();
 		}
 		if(!this.reader.isEOF()) {
-			this.reader.nextChar();
+//			this.reader.nextChar();
 		}
+//		System.out.println("End   comment: " + (char)this.reader.getChar());
 	}
 	
 	private void saveToken(Token token) {
