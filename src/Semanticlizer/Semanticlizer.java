@@ -242,7 +242,7 @@ public class Semanticlizer {
         sp.returnType = returnType;
         functionCode.append(analyzeBlockStmt(sp));
 
-        functionCode.appendFront(functionCode.size(), 4)
+        functionCode.appendFront(functionCode.size()+1, 4)
                 .appendFront(localVariableCount.count-1, 4)
                 .appendFront(paramsCount, 4)
                 .appendFront(returnType==SymbolType.VOID ? 0 : 1, 4)
