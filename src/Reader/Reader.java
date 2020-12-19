@@ -29,6 +29,7 @@ public class Reader {
 		while(bufferedInputStream.available() > 0){
 			System.out.print((char)bufferedInputStream.read());
 		}
+		System.out.println();
 		bufferedInputStream.close();
 		fileInputStream.close();
 
