@@ -3,4 +3,4 @@ WORKDIR /app
 COPY src /app/src
 RUN cd src
 RUN ls
-RUN javac -encoding utf8 Main.java
+RUN cd src; javac -encoding utf8 Main.java
