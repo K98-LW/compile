@@ -247,6 +247,7 @@ public class Semanticlizer {
                 .appendFront(paramsCount, 4)
                 .appendFront(returnType==SymbolType.VOID ? 0 : 1, 4)
                 .appendFront(functionSymbol.location, 4);
+        functionCode.append(CodeBuilder.ret);
         return functionCode;
 }
 
