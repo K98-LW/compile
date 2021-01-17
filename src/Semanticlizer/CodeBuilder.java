@@ -10,7 +10,7 @@ final class CodeBuilder {
     final public static String push(long num){
         return "01" + String.format("%016x", num);
     }
-    final public static String pop = "02";
+    final public static String pop = "03";
     final public static String dup = "04";
     final public static String loca(int num){
         return "0a" + String.format("%08x", num);
