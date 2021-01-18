@@ -549,9 +549,9 @@ public class Syntacticor {
             SyntaxTreeNode rhs = analyzePrimaryExpr();
 
             while(getToken().isBinaryOp()
-                    && getToken().getPriority() > op.getPriority()
+                    && (getToken().getPriority() > op.getPriority()
                     || (getToken().isRightAssoc()
-                    && getToken().getPriority() == op.getPriority())){
+                    && getToken().getPriority() == op.getPriority()))){
                 rhs = analyzeOPG(rhs, getToken().getPriority());
             }
 
